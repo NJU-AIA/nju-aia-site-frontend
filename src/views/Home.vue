@@ -1,4 +1,3 @@
-<!-- Home.vue -->
 <template>
   <div class="min-h-screen bg-white dark:bg-gray-950 font-sans transition-colors duration-300">
     <Header />
@@ -22,23 +21,24 @@
           </p>
 
           <div class="flex flex-wrap gap-3 mt-2">
-            <a 
-              href="/about" 
+            <router-link
+              to="/about"
               class="px-12 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors duration-200"
             >
               立即加入
-            </a>
-            <a 
-              href="/activity-posts" 
+            </router-link>
+
+            <router-link
+              to="/activity-posts"
               class="px-12 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
             >
               了解更多
-            </a>
+            </router-link>
           </div>
         </div>
 
         <div class="relative flex justify-center items-center">
-          <div class="w-80 h-80 md:w-96 md:h-96 rounded-2xl  flex items-center justify-center overflow-hidden">
+          <div class="w-80 h-80 md:w-96 md:h-96 rounded-2xl flex items-center justify-center overflow-hidden">
             <img 
               :src="randomGif" 
               alt="Capoo" 
@@ -46,8 +46,6 @@
             />
           </div>
         </div>
-
-        
 
       </div>
     </section>
@@ -68,13 +66,17 @@
           </h2>
         </div>
 
-        <div v-if="recentEvents.length === 0" class="py-20 text-center text-gray-400 text-sm">
-          <!-- 正在加载近期活动... -->
+        <!-- 只有首次没有缓存时才显示 loading -->
+        <div
+          v-if="homeStore.isLoading && !homeStore.hasData"
+          class="py-20 text-center text-gray-400 text-sm"
+        >
+          正在加载近期活动...
         </div>
 
         <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           <router-link 
-            v-for="post in recentEvents" 
+            v-for="post in homeStore.recentEvents" 
             :key="post.id" 
             :to="`/reader?id=${post.id}`"
             class="group block outline-none"
@@ -108,24 +110,22 @@
           </router-link>
         </div>
 
+        <p v-if="homeStore.error && !homeStore.hasData" class="mt-6 text-center text-sm text-red-500">
+          {{ homeStore.error }}
+        </p>
+
       </div>
     </section>
-
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { api, type DocumentMeta } from '@/api/client'
 import Header from '@/components/Header.vue'
+import { useHomeStore } from '@/stores/home'
 
-interface EventMeta extends DocumentMeta {
-  description?: string;
-}
+const homeStore = useHomeStore()
 
-const recentEvents = ref<EventMeta[]>([])
-
-// 随机 GIF
 const randomGif = ref('')
 
 const getRandomGif = () => {
@@ -133,24 +133,19 @@ const getRandomGif = () => {
   return `https://aia-1361527502.cos.ap-nanjing.myqcloud.com/capoo/${n}.gif`
 }
 
-onMounted(async () => {
-  // 设置随机 GIF
+onMounted(() => {
   randomGif.value = getRandomGif()
 
-  try {
-    const docs = await api.getDocList('activity-posts')
-    recentEvents.value = docs.slice(0, 3)
-  } catch (error) {
-    console.error('加载近期活动失败', error)
-  }
+  // 先用缓存渲染，再静默更新
+  homeStore.fetchRecentEvents()
 })
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("zh-CN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZone: "Asia/Shanghai"
+  return new Date(dateString).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'Asia/Shanghai',
   })
 }
 </script>

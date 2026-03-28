@@ -1,15 +1,13 @@
-<!-- Reader.vue -->
 <template>
   <div class="w-screen h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 flex transition-colors duration-300 relative">
-
     <!-- Sidebar -->
     <transition name="slide-sidebar">
       <div
         v-if="showSidebar"
-        class="w-[260px] h-full bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 flex flex-col shrink-0 z-20 absolute md:relative"
+        class="w-65 h-full bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 flex flex-col shrink-0 z-20 absolute md:relative"
       >
         <!-- Sidebar Header -->
-        <div class="h-14 px-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center flex-shrink-0">
+        <div class="h-14 px-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
           <a href="/" class="flex items-center gap-2 outline-none group">
             <img src="/logo.png" alt="AIA Logo" class="w-5 h-5 object-contain" />
             <span class="text-sm font-semibold text-gray-900 dark:text-gray-50 group-hover:text-[#40B3FF] transition-colors">
@@ -18,6 +16,18 @@
           </a>
 
           <div class="flex items-center gap-0.5">
+            <!-- 同步当前文章 -->
+            <button
+              @click="syncCurrentDocument"
+              class="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title="同步当前文章最新内容"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M5.636 18.364A9 9 0 103.514 9.88M18.364 5.636A9 9 0 0120.486 14.12"/>
+              </svg>
+            </button>
+
+            <!-- 临时编辑 -->
             <button
               @click="showSourceEditor = !showSourceEditor"
               class="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -28,6 +38,7 @@
               </svg>
             </button>
 
+            <!-- 主题 -->
             <button
               @click="toggleTheme"
               class="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -41,6 +52,7 @@
               </svg>
             </button>
 
+            <!-- 隐藏侧边栏 -->
             <button
               @click="showSidebar = false"
               class="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -67,16 +79,36 @@
               <div v-for="doc in docs" :key="doc.id" class="flex items-center gap-1 mb-1">
                 <button
                   @click="cycleViewMode(doc.id)"
-                  class="p-2 rounded-lg flex items-center justify-center flex-shrink-0 text-gray-400 dark:text-gray-500 hover:text-[#40B3FF] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  class="p-2 rounded-lg flex items-center justify-center shrink-0 text-gray-400 dark:text-gray-500 hover:text-[#40B3FF] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   title="切换渲染模式"
                 >
-                  <svg v-if="documentModes[doc.id] === 'markdown'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    v-if="documentModes[doc.id] === 'article'"
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                   </svg>
-                  <svg v-else-if="documentModes[doc.id] === 'slides'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                  <svg
+                    v-else-if="documentModes[doc.id] === 'slides'"
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
                   </svg>
-                  <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                  <svg
+                    v-else
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                   </svg>
                 </button>
@@ -94,16 +126,22 @@
               </div>
             </div>
           </template>
+
+          <p v-if="readerStore.error && docList.length === 0" class="px-2 text-xs text-red-500">
+            {{ readerStore.error }}
+          </p>
         </div>
       </div>
     </transition>
 
     <!-- Main Content -->
     <div class="flex-1 h-full bg-white dark:bg-gray-950 relative w-full transition-colors flex overflow-hidden">
-
       <!-- Hint -->
       <transition name="fade-view">
-        <div v-if="!showSidebar || showSourceEditor" class="fixed top-5 right-6 z-50 opacity-10 hover:opacity-100 transition-opacity pointer-events-none">
+        <div
+          v-if="!showSidebar || showSourceEditor"
+          class="fixed top-5 right-6 z-50 opacity-10 hover:opacity-100 transition-opacity pointer-events-none"
+        >
           <span class="bg-gray-900 dark:bg-gray-700 text-white text-xs px-3 py-1.5 rounded-full border border-gray-700 dark:border-gray-600">
             按 <b>Esc</b> 恢复默认视图
           </span>
@@ -111,15 +149,34 @@
       </transition>
 
       <!-- Source Editor -->
-      <div v-show="showSourceEditor" class="w-1/2 h-full border-r border-gray-100 dark:border-gray-800 flex flex-col shrink-0">
+      <div
+        v-show="showSourceEditor"
+        class="w-1/2 h-full border-r border-gray-100 dark:border-gray-800 flex flex-col shrink-0"
+      >
         <div class="bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-xs px-4 py-2 border-b border-amber-100 dark:border-amber-900/50 flex justify-between items-center">
           <span>临时修改模式，修改不会保存</span>
-          <button @click="showSourceEditor = false" class="hover:text-amber-900 dark:hover:text-amber-200 transition-colors">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
+
+          <div class="flex items-center gap-2">
+            <button
+              @click="restoreLatestDocument"
+              class="px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
+              title="放弃当前修改，并同步最新文章内容"
+            >
+              还原
+            </button>
+
+            <button
+              @click="showSourceEditor = false"
+              class="hover:text-amber-900 dark:hover:text-amber-200 transition-colors"
+              title="关闭源码编辑器"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
         </div>
+
         <textarea
           v-model="currentMarkdown"
           class="flex-1 w-full p-6 bg-white dark:bg-gray-950 text-gray-800 dark:text-gray-200 font-mono text-sm leading-relaxed resize-none outline-none custom-scrollbar"
@@ -127,23 +184,43 @@
       </div>
 
       <!-- View -->
-      <div :class="showSourceEditor ? 'w-1/2' : 'w-full'" class="h-full relative overflow-y-auto custom-scrollbar transition-all duration-300">
+      <div
+        :class="showSourceEditor ? 'w-1/2' : 'w-full'"
+        class="h-full relative overflow-y-auto custom-scrollbar transition-all duration-300"
+      >
         <transition name="fade-view" mode="out-in">
-          <HomeworkView v-if="currentViewMode === 'homework'" :slides="slides" />
-          <SlideView v-else-if="currentViewMode === 'slides' && slides.length > 0" :slide="slides[currentSlideIndex]" />
-          <ArticleView v-else-if="currentViewMode === 'article'" :slides="slides" />
+          <HomeworkView
+            v-if="currentViewMode === 'homework'"
+            :slides="slides"
+          />
+          <SlideView
+            v-else-if="currentViewMode === 'slides' && slides.length > 0"
+            :slide="slides[currentSlideIndex]"
+          />
+          <ArticleView
+            v-else-if="currentViewMode === 'article'"
+            :slides="slides"
+          />
+          <div
+            v-else
+            class="h-full flex items-center justify-center text-sm text-gray-400"
+          >
+            暂无可显示内容
+          </div>
         </transition>
       </div>
 
       <!-- Slide Counter -->
       <transition name="fade-view">
-        <div v-if="currentViewMode === 'slides' && slides.length > 0" class="fixed bottom-5 right-6 z-50 opacity-30 hover:opacity-100 transition-opacity">
+        <div
+          v-if="currentViewMode === 'slides' && slides.length > 0"
+          class="fixed bottom-5 right-6 z-50 opacity-30 hover:opacity-100 transition-opacity"
+        >
           <div class="bg-gray-900 dark:bg-gray-800 text-white font-mono text-xs px-3 py-1.5 rounded-full border border-gray-700">
             {{ currentSlideIndex + 1 }} / {{ slides.length }}
           </div>
         </div>
       </transition>
-
     </div>
   </div>
 </template>
@@ -166,154 +243,156 @@
 </style>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, provide, watch } from 'vue';
-import { api, type DocumentMeta, type ViewMode } from '@/api/client'; 
-import { useTheme } from '@/composables/useTheme'; 
-import { parseMarkdownToSlides, type SlideNode } from '@/core/parser';
+import { ref, computed, onMounted, onUnmounted, provide, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useTheme } from '@/composables/useTheme'
+import { useReaderStore } from '@/stores/reader'
 
-import HomeworkView from '@/components/HomeworkView.vue';
-import SlideView from '@/components/SlideView.vue';
-import ArticleView from '@/components/ArticleView.vue'; 
+import HomeworkView from '@/components/HomeworkView.vue'
+import SlideView from '@/components/SlideView.vue'
+import ArticleView from '@/components/ArticleView.vue'
 
-const ASSET_BASE_URL = 'https://raw.githubusercontent.com/NJU-AIA/nju-aia.github.io/main/src';
+const ASSET_BASE_URL = 'https://cdn.jsdelivr.net/gh/NJU-AIA/nju-aia.github.io@main/src'
 
-const { isDark, toggleTheme } = useTheme();
+const { isDark, toggleTheme } = useTheme()
+const readerStore = useReaderStore()
+const route = useRoute()
+const router = useRouter()
 
-const docList = ref<DocumentMeta[]>([]);
-const currentDocId = ref<string>('');
-const currentMarkdown = ref(''); 
-const slides = ref<SlideNode[]>([]);
+const showSidebar = ref(true)
+const showSourceEditor = ref(false)
+const currentSlideIndex = ref(0)
 
-const showSidebar = ref(true); 
-const showSourceEditor = ref(false);
+provide('isDark', isDark)
+provide('assetBaseUrl', ASSET_BASE_URL)
 
-const viewModes = ['homework', 'slides', 'article'] as const;
-const currentViewMode = ref<ViewMode>('article');
-const currentSlideIndex = ref(0);
-
-const documentModes = ref<Record<string, ViewMode>>({});
-
-provide('isDark', isDark);
-provide('assetBaseUrl', ASSET_BASE_URL);
-
-// 监听 Markdown 内容变化，实时解析
-watch(currentMarkdown, (newVal) => {
-  if (newVal) {
-    slides.value = parseMarkdownToSlides(newVal);
-  } else {
-    slides.value = [];
-  }
-});
-
-const groupedDocs = computed(() => {
-  return {
-    '活动推文': docList.value.filter(d => d.category === 'activity-posts'),
-    '技术教程': docList.value.filter(d => d.category === 'tech-tutorials'),
-  };
-});
-
-const getModeIcon = (mode: ViewMode) => {
-  switch (mode) {
-    case 'homework': return '📝';
-    case 'slides': return '📺';
-    case 'article': return '📄';
-    default: return '📄';
-  }
-};
-
-const cycleViewMode = (id: string) => {
-  const currentModeForId = documentModes.value[id];
-  if (!currentModeForId) return;
-
-  const idx = viewModes.indexOf(currentModeForId);
-  const nextMode = viewModes[(idx + 1) % viewModes.length];
-
-  documentModes.value[id] = nextMode;
-
-  if (id === currentDocId.value) {
-    currentViewMode.value = nextMode;
-    currentSlideIndex.value = 0; 
-  }
-};
-
-const initData = async () => {
-  try {
-    docList.value = await api.getDocList();
-    
-    docList.value.forEach(doc => {
-      if (!documentModes.value[doc.id]) {
-        documentModes.value[doc.id] = doc.defaultMode;
-      }
-    });
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const initId = urlParams.get('id');
-
-    if (initId && docList.value.some(d => d.id === initId)) {
-      await loadDocument(initId);
-    } else if (docList.value.length > 0) {
-      await loadDocument(docList.value[0].id);
-    }
-  } catch (error) {
-    console.error("初始化列表失败", error);
-  }
-};
+const groupedDocs = computed(() => readerStore.groupedDocs)
+const docList = computed(() => readerStore.docList)
+const currentDocId = computed(() => readerStore.currentDocId)
+const currentMarkdown = computed({
+  get: () => readerStore.currentMarkdown,
+  set: (val: string) => readerStore.updateCurrentMarkdown(val),
+})
+const slides = computed(() => readerStore.currentSlides)
+const documentModes = computed(() => readerStore.documentModes)
+const currentViewMode = computed(() => readerStore.currentViewMode)
 
 const loadDocument = async (id: string) => {
-  currentDocId.value = id;
-  if (documentModes.value[id]) {
-    currentViewMode.value = documentModes.value[id];
-  }
-  currentSlideIndex.value = 0;
-  
-  try {
-    const data = await api.getDocContent(id);
-    currentMarkdown.value = data.content; 
-  } catch (error) {
-    console.error("加载文档失败", error);
-    currentMarkdown.value = "# 文档加载失败\n请确保后端 API 服务正常运行。";
-  }
-};
+  if (!id) return
 
-// 【修改点】：全局键盘事件重构，加入彩蛋逻辑和全局 Esc 接管
-const handleKeydown = async(e: KeyboardEvent) => {
-  const isTyping = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName);
+  currentSlideIndex.value = 0
+  await readerStore.loadDocument(id)
 
-  // 1. 全局 Esc 拦截（无论什么状态，即使在输入框内，也恢复默认视图并失焦）
-  if (e.key === 'Escape') {
-    showSidebar.value = true;
-    showSourceEditor.value = false;
-    if (isTyping) {
-      (e.target as HTMLElement).blur();
+  router.replace({
+    path: '/reader',
+    query: { id },
+  })
+}
+
+const cycleViewMode = (id: string) => {
+  readerStore.cycleViewMode(id)
+  if (id === readerStore.currentDocId) {
+    currentSlideIndex.value = 0
+  }
+}
+
+const syncCurrentDocument = async () => {
+  if (!readerStore.currentDocId) return
+  currentSlideIndex.value = 0
+  await readerStore.refreshCurrentDocument()
+}
+
+const restoreLatestDocument = async () => {
+  if (!readerStore.currentDocId) return
+  currentSlideIndex.value = 0
+  await readerStore.refreshCurrentDocument()
+}
+
+const initData = async () => {
+  const initId = typeof route.query.id === 'string' ? route.query.id : ''
+
+  // 先用缓存秒开
+  if (readerStore.docList.length > 0) {
+    if (initId && readerStore.docList.some(d => d.id === initId)) {
+      await readerStore.loadDocument(initId)
+    } else {
+      const firstId = readerStore.docList[0].id
+      await readerStore.loadDocument(firstId)
+      router.replace({ path: '/reader', query: { id: firstId } })
     }
-    return;
   }
 
-  // 如果正在输入，屏蔽其他所有快捷键
-  if (isTyping) return;
+  // 每次进入 Reader，都重新拉一次最新列表和基本信息
+  await readerStore.fetchDocList()
 
-  // 2. 快捷键 E 触发源码编辑彩蛋
+  // 用最新列表校正当前文章
+  const latestId = typeof route.query.id === 'string' ? route.query.id : ''
+
+  if (latestId && readerStore.docList.some(d => d.id === latestId)) {
+    if (!readerStore.currentDocId) {
+      await readerStore.loadDocument(latestId)
+    }
+  } else if (readerStore.docList.length > 0) {
+    const firstId = readerStore.docList[0].id
+    if (readerStore.currentDocId !== firstId) {
+      await readerStore.loadDocument(firstId)
+    }
+    router.replace({ path: '/reader', query: { id: firstId } })
+  }
+}
+
+watch(
+  () => route.query.id,
+  async (newId) => {
+    if (typeof newId === 'string' && newId && newId !== readerStore.currentDocId) {
+      currentSlideIndex.value = 0
+      await readerStore.loadDocument(newId)
+    }
+  }
+)
+
+const handleKeydown = (e: KeyboardEvent) => {
+  const isTyping = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)
+
+  if (e.key === 'Escape') {
+    showSidebar.value = true
+    showSourceEditor.value = false
+    if (isTyping) {
+      ;(e.target as HTMLElement).blur()
+    }
+    return
+  }
+
+  if (isTyping) return
+
   if (e.key.toLowerCase() === 'e') {
-    e.preventDefault();
-    showSourceEditor.value = !showSourceEditor.value;
+    e.preventDefault()
+    showSourceEditor.value = !showSourceEditor.value
   }
 
-  // 3. 幻灯片翻页逻辑
   if (currentViewMode.value === 'slides' && slides.value.length > 0) {
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
-      e.preventDefault();
-      if (currentSlideIndex.value < slides.value.length - 1) currentSlideIndex.value++;
+      e.preventDefault()
+      if (currentSlideIndex.value < slides.value.length - 1) {
+        currentSlideIndex.value++
+      }
     }
+
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-      e.preventDefault();
-      if (currentSlideIndex.value > 0) currentSlideIndex.value--;
+      e.preventDefault()
+      if (currentSlideIndex.value > 0) {
+        currentSlideIndex.value--
+      }
     }
   }
-};
+}
 
 onMounted(() => {
-  initData();
-  window.addEventListener('keydown', handleKeydown);
-});
-onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
+  initData()
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
 </script>

@@ -1,86 +1,108 @@
-<!-- About.vue -->
 <template>
   <div class="min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
     <Header />
 
     <main class="pt-24 pb-20 px-6">
-      <div v-if="isLoading" class="flex justify-center items-center py-40 text-sm text-gray-400">
-        <!-- 正在加载社团信息... -->
+      <!-- 首次加载（没有缓存时） -->
+      <div
+        v-if="aboutStore.isLoading && !aboutStore.hasData"
+        class="flex justify-center items-center py-40 text-sm text-gray-400"
+      >
+        正在加载社团信息...
       </div>
 
+      <!-- 正常内容 -->
       <div v-else class="max-w-4xl mx-auto">
 
         <!-- Page Title -->
         <div class="mb-16 text-center">
-          <p class="text-xs font-medium text-[#40B3FF] uppercase tracking-widest mb-4">About Us</p>
+          <p class="text-xs font-medium text-[#40B3FF] uppercase tracking-widest mb-4">
+            About Us
+          </p>
           <h1 class="text-4xl md:text-5xl font-semibold tracking-tight text-gray-900 dark:text-gray-50 text-balance">
-            {{ aboutData.title }}
+            {{ aboutStore.aboutData.title }}
           </h1>
         </div>
 
         <!-- 关于我们 + 我们的目标 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-
-          <div class="p-8 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 hover:border-gray-200 dark:hover:border-gray-700 transition-colors duration-200">
+          <div class="p-8 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900">
             <h2 class="text-base font-semibold text-gray-900 dark:text-gray-50 mb-4 flex items-center gap-2">
               <span class="w-1 h-4 bg-[#40B3FF] rounded-full"></span>
               关于我们
             </h2>
             <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-              {{ aboutData.intro }}
+              {{ aboutStore.aboutData.intro }}
             </p>
           </div>
 
-          <div class="p-8 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 hover:border-gray-200 dark:hover:border-gray-700 transition-colors duration-200">
+          <div class="p-8 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900">
             <h2 class="text-base font-semibold text-gray-900 dark:text-gray-50 mb-4 flex items-center gap-2">
               <span class="w-1 h-4 bg-[#40B3FF] rounded-full"></span>
               我们的目标
             </h2>
             <ul class="space-y-2.5">
-              <li v-for="goal in aboutData.goals" :key="goal" class="flex items-start gap-2.5">
-                <svg class="w-4 h-4 text-[#40B3FF] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <li
+                v-for="goal in aboutStore.aboutData.goals"
+                :key="goal"
+                class="flex items-start gap-2.5"
+              >
+                <svg class="w-4 h-4 text-[#40B3FF] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                <span class="text-sm text-gray-600 dark:text-gray-400">{{ goal }}</span>
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                  {{ goal }}
+                </span>
               </li>
             </ul>
           </div>
-
         </div>
 
         <!-- 我们的活动 -->
-        <div class="p-8 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 hover:border-gray-200 dark:hover:border-gray-700 transition-colors duration-200 mb-5">
+        <div class="p-8 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 mb-5">
           <h2 class="text-base font-semibold text-gray-900 dark:text-gray-50 mb-6 flex items-center gap-2">
             <span class="w-1 h-4 bg-[#40B3FF] rounded-full"></span>
             我们的活动
           </h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div v-for="activity in aboutData.activities" :key="activity.id" class="flex items-start gap-4 group">
-              <div class="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg flex-shrink-0 group-hover:bg-blue-50 dark:group-hover:bg-gray-700 transition-colors">
+            <div
+              v-for="activity in aboutStore.aboutData.activities"
+              :key="activity.id"
+              class="flex items-start gap-4"
+            >
+              <div class="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg shrink-0">
                 <svg v-if="activity.id === 'meeting'" class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
                 <svg v-else-if="activity.id === 'contest'" class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
                 </svg>
               </div>
               <div>
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">{{ activity.title }}</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{{ activity.description }}</p>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                  {{ activity.title }}
+                </h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                  {{ activity.description }}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         <!-- 联系我们 -->
-        <div class="p-8 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 hover:border-gray-200 dark:hover:border-gray-700 transition-colors duration-200 mb-10">
+        <div class="p-8 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 mb-10">
           <h2 class="text-base font-semibold text-gray-900 dark:text-gray-50 mb-6 flex items-center gap-2">
             <span class="w-1 h-4 bg-[#40B3FF] rounded-full"></span>
             联系我们
           </h2>
           <div class="flex flex-wrap gap-4">
-            <div v-for="contact in aboutData.contacts" :key="contact.id" class="flex items-center gap-2 group">
-              <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg group-hover:bg-blue-50 dark:group-hover:bg-gray-700 transition-colors">
+            <div
+              v-for="contact in aboutStore.aboutData.contacts"
+              :key="contact.id"
+              class="flex items-center gap-2"
+            >
+              <div class="p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <svg v-if="contact.id === 'qq'" class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
                 </svg>
@@ -91,16 +113,24 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
               </div>
-              <a :href="contact.link" class="text-sm text-gray-600 dark:text-gray-400 hover:text-[#40B3FF] transition-colors">
+              <a
+                :href="contact.link"
+                class="text-sm text-gray-600 dark:text-gray-400 hover:text-[#40B3FF] transition-colors"
+              >
                 {{ contact.label }}
               </a>
             </div>
           </div>
         </div>
 
-        <!-- Footer note -->
+        <!-- Footer -->
         <p class="text-center text-xs text-gray-400 dark:text-gray-600">
-          {{ aboutData.footer }}
+          {{ aboutStore.aboutData.footer }}
+        </p>
+
+        <!-- 错误提示 -->
+        <p v-if="aboutStore.error" class="text-center text-sm text-red-500 mt-6">
+          {{ aboutStore.error }}
         </p>
 
       </div>
@@ -109,32 +139,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { api } from '@/api/client'
+import { onMounted } from 'vue'
 import Header from '@/components/Header.vue'
+import { useAboutStore } from '@/stores/about'
 
-// 定义响应式数据，给一些默认空值防止初次渲染报错
-const isLoading = ref(true)
-const aboutData = ref({
-  title: '',
-  intro: '',
-  goals: [] as string[],
-  activities: [] as any[],
-  contacts: [] as any[],
-  footer: ''
-})
+const aboutStore = useAboutStore()
 
-onMounted(async () => {
-  try {
-    // 从后端 API 获取关于我们的动态文案
-    const data = await api.getAbout()
-    if (data) {
-      aboutData.value = data
-    }
-  } catch (error) {
-    console.error("加载关于我们数据失败", error)
-  } finally {
-    isLoading.value = false
-  }
+// 页面加载时：先用缓存，再后台刷新
+onMounted(() => {
+  aboutStore.fetchAbout()
 })
 </script>

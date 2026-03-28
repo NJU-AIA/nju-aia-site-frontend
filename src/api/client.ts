@@ -1,5 +1,6 @@
 // src/api/client.ts
 const API_BASE = import.meta.env.VITE_APP_API_BASE_URL || "http://localhost:8000/api";
+
 export type ViewMode = 'homework' | 'slides' | 'article';
 
 export interface DocumentMeta {
@@ -8,6 +9,27 @@ export interface DocumentMeta {
   category: string;
   date: string;
   defaultMode: ViewMode;
+}
+
+export interface AboutActivity {
+  id: string;
+  title: string;
+  description: string;
+}
+
+export interface AboutContact {
+  id: string;
+  label: string;
+  link: string;
+}
+
+export interface AboutData {
+  title: string;
+  intro: string;
+  goals: string[];
+  activities: AboutActivity[];
+  contacts: AboutContact[];
+  footer: string;
 }
 
 export async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -32,12 +54,12 @@ export const api = {
   getMembers: () => request<any[]>('/members'),
   getHonors: () => request<any[]>('/honors'),
   getDocList: (category?: string) => request<any[]>(category ? `/documents?category=${category}` : '/documents'),
-  getDocContent: (id: string) => request<{content: string}>(`/documents/${id}`),
-  getAbout: () => request<any>('/about'),
+  getDocContent: (id: string) => request<{ content: string }>(`/documents/${id}`),
+  getAbout: () => request<AboutData>('/about'),
 
-  saveDoc: (data: { id: string; title: string; category: string; defaultMode: string; content: string }) => 
+  saveDoc: (data: { id: string; title: string; category: string; defaultMode: string; content: string }) =>
     request<any>('/documents', { method: 'POST', body: JSON.stringify(data) }),
-    
-  deleteDoc: (id: string) => 
+
+  deleteDoc: (id: string) =>
     request<any>(`/documents/${id}`, { method: 'DELETE' })
 };

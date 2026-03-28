@@ -1,4 +1,3 @@
-<!-- MemberWall.vue -->
 <template>
   <div class="min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
     <Header />
@@ -16,9 +15,16 @@
           </p>
         </div>
 
-        <div class="space-y-5">
+        <div
+          v-if="memberStore.isLoading && !memberStore.hasData"
+          class="flex justify-center items-center py-40 text-sm text-gray-400"
+        >
+          正在加载成员信息...
+        </div>
+
+        <div v-else class="space-y-5">
           <section
-            v-for="group in members"
+            v-for="group in memberStore.members"
             :key="group.year"
             class="p-8 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 hover:border-gray-200 dark:hover:border-gray-700 transition-colors duration-200"
           >
@@ -39,22 +45,32 @@
                 class="flex flex-col justify-center px-3 py-2.5 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 min-h-[3rem]"
               >
                 <template v-if="isString(member)">
-                  <p class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center truncate">{{ member }}</p>
+                  <p class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center truncate">
+                    {{ member }}
+                  </p>
                 </template>
 
                 <template v-else>
                   <div class="flex justify-between items-center gap-1 mb-1">
-                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ member.name }}</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {{ member.name }}
+                    </p>
                     <span class="flex-shrink-0 text-[10px] font-medium text-[#40B3FF] bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full">
                       志愿者
                     </span>
                   </div>
-                  <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed line-clamp-2">{{ member.description }}</p>
+                  <p class="text-xs text-gray-400 dark:text-gray-500 leading-relaxed line-clamp-2">
+                    {{ member.description }}
+                  </p>
                 </template>
               </div>
             </div>
           </section>
         </div>
+
+        <p v-if="memberStore.error && !memberStore.hasData" class="text-center text-sm text-red-500 mt-6">
+          {{ memberStore.error }}
+        </p>
 
       </div>
     </main>
@@ -62,20 +78,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { api } from '@/api/client' // 引入刚才写的客户端
+import { onMounted } from 'vue'
 import Header from '@/components/Header.vue'
+import { useMemberStore, type MemberEntry } from '@/stores/member'
 
-const members = ref<any[]>([])
-const isLoading = ref(true)
+const memberStore = useMemberStore()
 
-onMounted(async () => {
-  try {
-    members.value = await api.getMembers()
-  } finally {
-    isLoading.value = false
-  }
+onMounted(() => {
+  // 先用缓存渲染，再静默更新
+  memberStore.fetchMembers()
 })
-// 类型守卫辅助函数，用于在 template 中区分字符串和对象
-const isString = (member: any): member is string => typeof member === 'string';
+
+const isString = (member: MemberEntry): member is string => typeof member === 'string'
 </script>
