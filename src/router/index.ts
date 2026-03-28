@@ -1,6 +1,6 @@
+// src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
 
-// 1. 首页通常不建议懒加载，因为它是用户进入网站的第一个页面，直接加载能最快渲染。
 import Home from '@/views/Home.vue' 
 
 const router = createRouter({
@@ -12,7 +12,6 @@ const router = createRouter({
     },
     { 
       path: '/activity-posts', 
-      // 2. 使用动态导入：只有用户点击“活动推文”时，浏览器才会下载该页面的 JS
       component: () => import('@/views/ActivityPosts.vue') 
     },
     { 
@@ -21,7 +20,6 @@ const router = createRouter({
     },
     { 
       path: '/reader', 
-      // 特别推荐：Reader 逻辑最重，懒加载收益最高
       component: () => import('@/views/Reader.vue') 
     },
     { 

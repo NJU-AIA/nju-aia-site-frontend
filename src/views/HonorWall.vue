@@ -1,3 +1,61 @@
+<!-- HonorWall.vue -->
+<template>
+  <div class="min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
+    <Header />
+
+    <main class="pt-24 pb-20 px-6">
+      <div class="max-w-4xl mx-auto">
+
+        <!-- Page Title -->
+        <div class="mb-16 text-center">
+          <p class="text-xs font-medium text-[#40B3FF] uppercase tracking-widest mb-4">Honor Wall</p>
+          <h1 class="text-4xl md:text-5xl font-semibold tracking-tight text-gray-900 dark:text-gray-50 text-balance">
+            荣誉墙
+          </h1>
+          <p class="mt-4 text-base text-gray-500 dark:text-gray-400">
+            纪念在例会中现场通关的同学们
+          </p>
+        </div>
+
+        <!-- Loading -->
+        <div v-if="isLoading" class="flex justify-center items-center py-40 text-sm text-gray-400">
+          <!-- 正在加载荣誉榜单... -->
+        </div>
+
+        <!-- Honor List -->
+        <div v-else class="space-y-4">
+          <div
+            v-for="honor in honors"
+            :key="honor.event"
+            class="p-8 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-200"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-50 flex items-center gap-2">
+                <span class="w-1 h-5 bg-[#40B3FF] rounded-full flex-shrink-0"></span>
+                {{ honor.event }}
+              </h2>
+              <span class="text-xs text-gray-400 dark:text-gray-500 pl-3 sm:pl-0">{{ honor.date }}</span>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pl-3">
+              <div
+                v-for="award in honor.awards"
+                :key="award.name"
+                class="flex items-center gap-2 py-2 px-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+              >
+                <!-- <span class="w-1.5 h-1.5 rounded-full bg-[#40B3FF] flex-shrink-0"></span> -->
+                <span class="text-sm text-gray-700 dark:text-gray-300 font-medium truncate">{{ award.name }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</template>
+
+
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { api } from '@/api/client'
@@ -21,55 +79,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
-    <Header />
-    
-    <main class="py-20 md:py-32 relative">
-      <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute top-1/4 left-1/3 w-64 h-64 bg-[#40B3FF] opacity-10 blur-3xl rounded-full"></div>
-        <div class="absolute bottom-1/4 right-1/3 w-64 h-64 bg-[#954CE9] opacity-10 blur-3xl rounded-full"></div>
-      </div>
-      
-      <div class="container mx-auto px-4 relative z-10 max-w-5xl">
-        <h1 class="text-4xl md:text-5xl font-bold text-center mb-12">
-          <span class="bg-gradient-to-r from-[#40B3FF] to-[#954CE9] bg-clip-text text-transparent">
-            荣誉墙
-          </span>
-        </h1>
-        <p class="text-center text-xl mb-16 dark:text-gray-300 text-gray-600">
-          纪念在例会中现场通关的同学们 ~
-        </p>
-        
-        <div v-if="isLoading" class="flex justify-center items-center py-20 text-gray-500">
-          正在加载荣誉榜单...
-        </div>
-
-        <div v-else class="space-y-16">
-          <div 
-            v-for="honor in honors" 
-            :key="honor.event" 
-            class="bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border-2 border-transparent hover:border-[#40B3FF] rounded-2xl p-8 transition-all duration-300"
-          >
-            <h2 class="text-2xl font-semibold mb-4 bg-gradient-to-r from-[#40B3FF] to-[#954CE9] bg-clip-text text-transparent">
-              {{ honor.event }}
-            </h2>
-            <p class="text-lg mb-6 dark:text-gray-400 text-gray-500">{{ honor.date }}</p>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div 
-                v-for="award in honor.awards" 
-                :key="award.name" 
-                class="flex items-center space-x-4"
-              >
-                <p class="dark:text-gray-300 text-gray-600 font-medium">{{ award.name }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </main>
-  </div>
-</template>
