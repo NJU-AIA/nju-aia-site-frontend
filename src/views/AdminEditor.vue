@@ -1,139 +1,4 @@
-<script setup lang="ts">
-import { ref, computed, onMounted, watch, provide, onUnmounted } from 'vue'
-import { api, type DocumentMeta } from '@/api/client'
-import { parseMarkdownToSlides, type SlideNode } from '@/core/parser'
-
-import ArticleView from '@/components/ArticleView.vue'
-import SlideView from '@/components/SlideView.vue'
-import HomeworkView from '@/components/HomeworkView.vue'
-
-const docList = ref<DocumentMeta[]>([])
-const searchQuery = ref('')
-const currentDoc = ref<Partial<DocumentMeta> & { content?: string }>({})
-const isEditing = ref(false)
-const isSaving = ref(false)
-
-const previewSlides = ref<SlideNode[]>([])
-const currentSlideIndex = ref(0) 
-
-// 【修改点 1】：使用两个独立的状态控制面板显示，代替全屏控制
-const showSidebar = ref(true)
-const showEditor = ref(true)
-
-const ASSET_BASE_URL = 'https://raw.githubusercontent.com/NJU-AIA/nju-aia.github.io/main/src';
-provide('assetBaseUrl', ASSET_BASE_URL);
-
-const filteredDocs = computed(() => {
-  return docList.value.filter(doc => 
-    doc.title?.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
-    doc.id?.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-})
-
-const fetchList = async () => {
-  try {
-    docList.value = await api.getDocList()
-  } catch(e) {
-    console.error("获取列表失败", e)
-  }
-}
-
-onMounted(() => {
-  fetchList()
-  window.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
-})
-
-watch(() => currentDoc.value.content, (newVal) => {
-  if (newVal) {
-    previewSlides.value = parseMarkdownToSlides(newVal)
-  } else {
-    previewSlides.value = []
-  }
-  currentSlideIndex.value = 0
-})
-
-watch(() => currentDoc.value.defaultMode, () => {
-  currentSlideIndex.value = 0
-})
-
-const handleKeydown = (e: KeyboardEvent) => {
-  // 【修改点 2】：退出沉浸模式（恢复所有面板）
-  if (e.key === 'Escape') {
-    showSidebar.value = true
-    showEditor.value = true
-  }
-  
-  if (currentDoc.value.defaultMode === 'slides' && previewSlides.value.length > 0) {
-    const isInputActive = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName);
-    // 只有在没隐藏编辑框并且正在输入时，才屏蔽翻页
-    if (isInputActive && showEditor.value) return; 
-
-    if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-      if (currentSlideIndex.value < previewSlides.value.length - 1) currentSlideIndex.value++
-    }
-    if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-      if (currentSlideIndex.value > 0) currentSlideIndex.value--
-    }
-  }
-}
-
-const createNewDoc = () => {
-  const timestamp = new Date().toISOString().split('T')[0];
-  currentDoc.value = {
-    id: `new-doc-${Date.now()}`,
-    title: '未命名新文章',
-    category: 'activity-posts',
-    defaultMode: 'article',
-    content: `# 新文章标题\n\n在这里开始编写...\n\n**日期**：${timestamp}`
-  }
-  isEditing.value = true
-  showSidebar.value = true
-  showEditor.value = true
-}
-
-const loadDoc = async (meta: DocumentMeta) => {
-  try {
-    const data = await api.getDocContent(meta.id)
-    currentDoc.value = { ...meta, content: data.content }
-    isEditing.value = true
-  } catch (error) {
-    alert('加载文章失败')
-  }
-}
-
-const handleSave = async () => {
-  if (!currentDoc.value.title || !currentDoc.value.id) return alert('标题和ID不能为空')
-  isSaving.value = true
-  try {
-    await api.saveDoc(currentDoc.value as any)
-    alert('保存成功！')
-    await fetchList()
-  } catch (error) {
-    alert('保存失败，请检查后端服务')
-  } finally {
-    isSaving.value = false
-  }
-}
-
-const handleDelete = async (id: string) => {
-  if (!confirm('确定要永久删除这篇文章吗？操作不可逆！')) return
-  try {
-    await api.deleteDoc(id)
-    alert('删除成功')
-    if (currentDoc.value.id === id) {
-      isEditing.value = false
-      currentDoc.value = {}
-    }
-    await fetchList()
-  } catch (error) {
-    alert('删除失败')
-  }
-}
-</script>
+<!-- AdminEditor.vue -->
 
 <template>
   <div class="h-screen w-screen flex bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200 overflow-hidden font-sans">
@@ -261,6 +126,140 @@ const handleDelete = async (id: string) => {
 
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, watch, provide, onUnmounted } from 'vue'
+import { api, type DocumentMeta } from '@/api/client'
+import { parseMarkdownToSlides, type SlideNode } from '@/core/parser'
+
+import ArticleView from '@/components/ArticleView.vue'
+import SlideView from '@/components/SlideView.vue'
+import HomeworkView from '@/components/HomeworkView.vue'
+
+const docList = ref<DocumentMeta[]>([])
+const searchQuery = ref('')
+const currentDoc = ref<Partial<DocumentMeta> & { content?: string }>({})
+const isEditing = ref(false)
+const isSaving = ref(false)
+
+const previewSlides = ref<SlideNode[]>([])
+const currentSlideIndex = ref(0) 
+
+const showSidebar = ref(true)
+const showEditor = ref(true)
+
+const ASSET_BASE_URL = 'https://raw.githubusercontent.com/NJU-AIA/nju-aia.github.io/main/src';
+provide('assetBaseUrl', ASSET_BASE_URL);
+
+const filteredDocs = computed(() => {
+  return docList.value.filter(doc => 
+    doc.title?.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
+    doc.id?.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
+
+const fetchList = async () => {
+  try {
+    docList.value = await api.getDocList()
+  } catch(e) {
+    console.error("获取列表失败", e)
+  }
+}
+
+onMounted(() => {
+  fetchList()
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+watch(() => currentDoc.value.content, (newVal) => {
+  if (newVal) {
+    previewSlides.value = parseMarkdownToSlides(newVal)
+  } else {
+    previewSlides.value = []
+  }
+  currentSlideIndex.value = 0
+})
+
+watch(() => currentDoc.value.defaultMode, () => {
+  currentSlideIndex.value = 0
+})
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    showSidebar.value = true
+    showEditor.value = true
+  }
+  
+  if (currentDoc.value.defaultMode === 'slides' && previewSlides.value.length > 0) {
+    const isInputActive = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName);
+    if (isInputActive && showEditor.value) return; 
+
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+      if (currentSlideIndex.value < previewSlides.value.length - 1) currentSlideIndex.value++
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      if (currentSlideIndex.value > 0) currentSlideIndex.value--
+    }
+  }
+}
+
+const createNewDoc = () => {
+  const timestamp = new Date().toISOString().split('T')[0];
+  currentDoc.value = {
+    id: `new-doc-${Date.now()}`,
+    title: '未命名新文章',
+    category: 'activity-posts',
+    defaultMode: 'article',
+    content: `# 新文章标题\n\n在这里开始编写...\n\n**日期**：${timestamp}`
+  }
+  isEditing.value = true
+  showSidebar.value = true
+  showEditor.value = true
+}
+
+const loadDoc = async (meta: DocumentMeta) => {
+  try {
+    const data = await api.getDocContent(meta.id)
+    currentDoc.value = { ...meta, content: data.content }
+    isEditing.value = true
+  } catch (error) {
+    alert('加载文章失败')
+  }
+}
+
+const handleSave = async () => {
+  if (!currentDoc.value.title || !currentDoc.value.id) return alert('标题和ID不能为空')
+  isSaving.value = true
+  try {
+    await api.saveDoc(currentDoc.value as any)
+    alert('保存成功！')
+    await fetchList()
+  } catch (error) {
+    alert('保存失败，请检查后端服务')
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const handleDelete = async (id: string) => {
+  if (!confirm('确定要永久删除这篇文章吗？操作不可逆！')) return
+  try {
+    await api.deleteDoc(id)
+    alert('删除成功')
+    if (currentDoc.value.id === id) {
+      isEditing.value = false
+      currentDoc.value = {}
+    }
+    await fetchList()
+  } catch (error) {
+    alert('删除失败')
+  }
+}
+</script>
 
 <style scoped>
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }

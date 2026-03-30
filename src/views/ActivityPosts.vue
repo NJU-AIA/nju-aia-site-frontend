@@ -27,23 +27,48 @@
           :to="`/reader?id=${post.id}`"
           class="group block border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 overflow-hidden hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200"
         >
-          <div class="h-36 bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
-            <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+          <div class="h-36 bg-gray-50 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
+            
+            <img
+              v-if="post.cover"
+              :src="resolveArticleAssetUrl(post.cover, post.id)"
+              :alt="post.title"
+              class="h-full w-full object-contain"
+            />
+            <svg
+              v-else
+              class="w-8 h-8 text-gray-300 dark:text-gray-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+              />
             </svg>
           </div>
 
           <div class="p-5">
-            <p class="text-xs text-gray-400 mb-2">{{ post.date }}</p>
+            <p class="text-xs text-gray-400 mb-2">{{ post.date || '暂无日期' }}</p>
 
             <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-[#40B3FF] transition-colors line-clamp-2 leading-snug">
               {{ post.title }}
             </h2>
 
+            <p
+              v-if="post.author"
+              class="mt-2 text-xs text-gray-500 dark:text-gray-400"
+            >
+              {{ post.author }}
+            </p>
+
             <span class="mt-3 flex items-center gap-0.5 text-xs font-medium text-[#40B3FF] opacity-0 group-hover:opacity-100 transition-opacity">
               阅读
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
               </svg>
             </span>
           </div>
@@ -61,14 +86,42 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import Header from '@/components/Header.vue'
-import { useActivityPostsStore } from '@/stores/activityPosts'
+import { onMounted } from 'vue';
+import Header from '@/components/Header.vue';
+import { useActivityPostsStore } from '@/stores/activityPosts';
 
-const activityPostsStore = useActivityPostsStore()
+const activityPostsStore = useActivityPostsStore();
+
+const ASSET_BASE_URL = 'http://localhost:8080/assets';
+
+function resolveArticleAssetUrl(url: string, articleId?: string) {
+  if (!url) return '';
+
+  if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('data:')
+  ) {
+    return url;
+  }
+
+  const base = ASSET_BASE_URL.replace(/\/$/, '');
+
+  if (url.startsWith('/')) {
+    return `${base}${url}`;
+  }
+
+  const cleanFilename = url.replace(/^\.\//, '');
+  const cleanArticleId = (articleId || '').trim();
+
+  if (cleanArticleId) {
+    return `${base}/${cleanArticleId}/${cleanFilename}`;
+  }
+
+  return `${base}/${cleanFilename}`;
+}
 
 onMounted(() => {
-  // 先用缓存渲染，再静默更新
-  activityPostsStore.fetchPosts()
-})
+  activityPostsStore.fetchPosts();
+});
 </script>

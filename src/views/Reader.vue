@@ -1,3 +1,5 @@
+<!-- Reader.vue -->
+
 <template>
   <div class="w-screen h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 flex transition-colors duration-300 relative">
     <!-- Sidebar -->
@@ -93,7 +95,7 @@
                   </svg>
 
                   <svg
-                    v-else-if="documentModes[doc.id] === 'slides'"
+                    v-else-if="documentModes[doc.id] === 'slide'"
                     class="w-3.5 h-3.5"
                     fill="none"
                     stroke="currentColor"
@@ -194,7 +196,7 @@
             :slides="slides"
           />
           <SlideView
-            v-else-if="currentViewMode === 'slides' && slides.length > 0"
+            v-else-if="currentViewMode === 'slide' && slides.length > 0"
             :slide="slides[currentSlideIndex]"
           />
           <ArticleView
@@ -213,7 +215,7 @@
       <!-- Slide Counter -->
       <transition name="fade-view">
         <div
-          v-if="currentViewMode === 'slides' && slides.length > 0"
+          v-if="currentViewMode === 'slide' && slides.length > 0"
           class="fixed bottom-5 right-6 z-50 opacity-30 hover:opacity-100 transition-opacity"
         >
           <div class="bg-gray-900 dark:bg-gray-800 text-white font-mono text-xs px-3 py-1.5 rounded-full border border-gray-700">
@@ -243,156 +245,159 @@
 </style>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, provide, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useTheme } from '@/composables/useTheme'
-import { useReaderStore } from '@/stores/reader'
+import { ref, computed, onMounted, onUnmounted, provide, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useTheme } from '@/composables/useTheme';
+import { useReaderStore } from '@/stores/reader';
 
-import HomeworkView from '@/components/HomeworkView.vue'
-import SlideView from '@/components/SlideView.vue'
-import ArticleView from '@/components/ArticleView.vue'
+import HomeworkView from '@/components/HomeworkView.vue';
+import SlideView from '@/components/SlideView.vue';
+import ArticleView from '@/components/ArticleView.vue';
 
-const ASSET_BASE_URL = 'https://cdn.jsdelivr.net/gh/NJU-AIA/nju-aia.github.io@main/src'
+// const ASSET_BASE_URL = 'https://cdn.jsdelivr.net/gh/NJU-AIA/nju-aia.github.io@main/src';
+const ASSET_BASE_URL = 'http://localhost:8080/assets';
 
-const { isDark, toggleTheme } = useTheme()
-const readerStore = useReaderStore()
-const route = useRoute()
-const router = useRouter()
 
-const showSidebar = ref(true)
-const showSourceEditor = ref(false)
-const currentSlideIndex = ref(0)
+const { isDark, toggleTheme } = useTheme();
+const readerStore = useReaderStore();
+const route = useRoute();
+const router = useRouter();
 
-provide('isDark', isDark)
-provide('assetBaseUrl', ASSET_BASE_URL)
+const showSidebar = ref(true);
+const showSourceEditor = ref(false);
+const currentSlideIndex = ref(0);
 
-const groupedDocs = computed(() => readerStore.groupedDocs)
-const docList = computed(() => readerStore.docList)
-const currentDocId = computed(() => readerStore.currentDocId)
+const groupedDocs = computed(() => readerStore.groupedDocs);
+const docList = computed(() => readerStore.docList);
+const currentDocId = computed(() => readerStore.currentDocId);
 const currentMarkdown = computed({
   get: () => readerStore.currentMarkdown,
   set: (val: string) => readerStore.updateCurrentMarkdown(val),
-})
-const slides = computed(() => readerStore.currentSlides)
-const documentModes = computed(() => readerStore.documentModes)
-const currentViewMode = computed(() => readerStore.currentViewMode)
+});
+const slides = computed(() => readerStore.currentSlides);
+const documentModes = computed(() => readerStore.documentModes);
+const currentViewMode = computed(() => readerStore.currentViewMode);
+
+provide('isDark', isDark);
+provide('assetBaseUrl', ASSET_BASE_URL);
+provide('currentArticleId', currentDocId);
 
 const loadDocument = async (id: string) => {
-  if (!id) return
+  if (!id) return;
 
-  currentSlideIndex.value = 0
-  await readerStore.loadDocument(id)
+  currentSlideIndex.value = 0;
+  await readerStore.loadDocument(id);
 
   router.replace({
     path: '/reader',
     query: { id },
-  })
-}
+  });
+};
 
 const cycleViewMode = (id: string) => {
-  readerStore.cycleViewMode(id)
+  readerStore.cycleViewMode(id);
   if (id === readerStore.currentDocId) {
-    currentSlideIndex.value = 0
+    currentSlideIndex.value = 0;
   }
-}
+};
 
 const syncCurrentDocument = async () => {
-  if (!readerStore.currentDocId) return
-  currentSlideIndex.value = 0
-  await readerStore.refreshCurrentDocument()
-}
+  if (!readerStore.currentDocId) return;
+  currentSlideIndex.value = 0;
+  await readerStore.refreshCurrentDocument();
+};
 
 const restoreLatestDocument = async () => {
-  if (!readerStore.currentDocId) return
-  currentSlideIndex.value = 0
-  await readerStore.refreshCurrentDocument()
-}
+  if (!readerStore.currentDocId) return;
+  currentSlideIndex.value = 0;
+  await readerStore.refreshCurrentDocument();
+};
 
 const initData = async () => {
-  const initId = typeof route.query.id === 'string' ? route.query.id : ''
+  const initId = typeof route.query.id === 'string' ? route.query.id : '';
 
   // 先用缓存秒开
   if (readerStore.docList.length > 0) {
-    if (initId && readerStore.docList.some(d => d.id === initId)) {
-      await readerStore.loadDocument(initId)
-    } else {
-      const firstId = readerStore.docList[0].id
-      await readerStore.loadDocument(firstId)
-      router.replace({ path: '/reader', query: { id: firstId } })
+    if (initId && readerStore.docList.some((d) => d.id === initId)) {
+      await readerStore.loadDocument(initId);
+    } else if (readerStore.docList.length > 0) {
+      const firstId = readerStore.docList[0].id;
+      await readerStore.loadDocument(firstId);
+      router.replace({ path: '/reader', query: { id: firstId } });
     }
   }
 
   // 每次进入 Reader，都重新拉一次最新列表和基本信息
-  await readerStore.fetchDocList()
+  await readerStore.fetchDocList();
 
   // 用最新列表校正当前文章
-  const latestId = typeof route.query.id === 'string' ? route.query.id : ''
+  const latestId = typeof route.query.id === 'string' ? route.query.id : '';
 
-  if (latestId && readerStore.docList.some(d => d.id === latestId)) {
-    if (!readerStore.currentDocId) {
-      await readerStore.loadDocument(latestId)
+  if (latestId && readerStore.docList.some((d) => d.id === latestId)) {
+    if (!readerStore.currentDocId || readerStore.currentDocId !== latestId) {
+      await readerStore.loadDocument(latestId);
     }
   } else if (readerStore.docList.length > 0) {
-    const firstId = readerStore.docList[0].id
+    const firstId = readerStore.docList[0].id;
     if (readerStore.currentDocId !== firstId) {
-      await readerStore.loadDocument(firstId)
+      await readerStore.loadDocument(firstId);
     }
-    router.replace({ path: '/reader', query: { id: firstId } })
+    router.replace({ path: '/reader', query: { id: firstId } });
   }
-}
+};
 
 watch(
   () => route.query.id,
   async (newId) => {
     if (typeof newId === 'string' && newId && newId !== readerStore.currentDocId) {
-      currentSlideIndex.value = 0
-      await readerStore.loadDocument(newId)
+      currentSlideIndex.value = 0;
+      await readerStore.loadDocument(newId);
     }
   }
-)
+);
 
 const handleKeydown = (e: KeyboardEvent) => {
-  const isTyping = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)
+  const isTyping = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName);
 
   if (e.key === 'Escape') {
-    showSidebar.value = true
-    showSourceEditor.value = false
+    showSidebar.value = true;
+    showSourceEditor.value = false;
     if (isTyping) {
-      ;(e.target as HTMLElement).blur()
+      (e.target as HTMLElement).blur();
     }
-    return
+    return;
   }
 
-  if (isTyping) return
+  if (isTyping) return;
 
   if (e.key.toLowerCase() === 'e') {
-    e.preventDefault()
-    showSourceEditor.value = !showSourceEditor.value
+    e.preventDefault();
+    showSourceEditor.value = !showSourceEditor.value;
   }
 
-  if (currentViewMode.value === 'slides' && slides.value.length > 0) {
+  if (currentViewMode.value === 'slide' && slides.value.length > 0) {
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
-      e.preventDefault()
+      e.preventDefault();
       if (currentSlideIndex.value < slides.value.length - 1) {
-        currentSlideIndex.value++
+        currentSlideIndex.value++;
       }
     }
 
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-      e.preventDefault()
+      e.preventDefault();
       if (currentSlideIndex.value > 0) {
-        currentSlideIndex.value--
+        currentSlideIndex.value--;
       }
     }
   }
-}
+};
 
 onMounted(() => {
-  initData()
-  window.addEventListener('keydown', handleKeydown)
-})
+  initData();
+  window.addEventListener('keydown', handleKeydown);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
-})
+  window.removeEventListener('keydown', handleKeydown);
+});
 </script>

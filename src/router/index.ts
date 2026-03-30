@@ -35,8 +35,12 @@ const router = createRouter({
       component: () => import('@/views/MemberWall.vue') 
     },
     { 
-      path: '/admin', 
-      component: () => import('@/views/AdminEditor.vue'),
+      path: '/admin/articles', 
+      component: () => import('@/views/AdminReader.vue'),
+    },
+    {
+      path: '/admin/assets',
+      component: () => import('@/views/AssetManager.vue'),
     },
     { 
       path: '/:pathMatch(.*)*', 
