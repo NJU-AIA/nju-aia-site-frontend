@@ -1,7 +1,7 @@
 import axios from 'axios';
+import { getToken } from '@/api/auth';
 
 export type ArticleCategory = 'activity' | 'tutorial';
-
 export type ArticleMode = 'article' | 'slide' | 'homework';
 
 export interface Article {
@@ -41,6 +41,16 @@ const http = axios.create({
   },
 });
 
+/** 请求拦截器：自动带 token */
+http.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+/** 响应拦截器 */
 http.interceptors.response.use(
   (response) => response,
   (error) => {

@@ -1,235 +1,189 @@
+<!-- AssetManager.vue -->
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
-    <Header />
+  <main class="max-w-6xl mx-auto px-6 pt-8 pb-20">
+    <div class="mb-10">
+      <p class="text-xs font-medium text-[#40B3FF] uppercase tracking-widest mb-3">Assets</p>
+      <h1 class="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
+        静态资源管理
+      </h1>
+      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        管理文章私有资源与公共图片 / 视频 / 代码资源。
+      </p>
+    </div>
 
-    <main class="max-w-6xl mx-auto px-6 pt-24 pb-20">
-      <div class="mb-10">
-        <p class="text-xs font-medium text-[#40B3FF] uppercase tracking-widest mb-4">Assets</p>
-        <h1 class="text-4xl md:text-5xl font-semibold tracking-tight text-gray-900 dark:text-gray-50 text-balance">
-          静态资源管理
-        </h1>
-        <p class="mt-4 text-base text-gray-500 dark:text-gray-400">
-          管理文章私有资源与公共图片 / 视频 / 代码资源。
-        </p>
+    <!-- Upload Panel -->
+    <div class="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div class="lg:col-span-2">
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">资源类型</label>
+          <select v-model="mode"
+            class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF]">
+            <option value="shared">公共资源</option>
+            <option value="article">文章私有资源</option>
+          </select>
+        </div>
+
+        <div v-if="mode === 'article'" class="lg:col-span-4">
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">选择文章</label>
+          <select v-model="selectedArticleId"
+            class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF]">
+            <option value="">请选择文章</option>
+            <option v-for="article in articleOptions" :key="article.id" :value="article.id">
+              {{ article.title }}（{{ article.id }}）
+            </option>
+          </select>
+        </div>
+
+        <div v-if="mode === 'article'" class="lg:col-span-3">
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">文章 ID</label>
+          <input :value="selectedArticleId" type="text" readonly
+            class="w-full rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm text-gray-400 dark:text-gray-500 outline-none" />
+        </div>
+
+        <div v-else class="lg:col-span-3">
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">公共目录</label>
+          <select v-model="sharedScope"
+            class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF]">
+            <option value="images">images</option>
+            <option value="videos">videos</option>
+            <option value="codes">codes</option>
+            <option value="docs">docs</option>
+          </select>
+        </div>
+
+        <div class="lg:col-span-3">
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">文件名（无后缀）</label>
+          <input v-model.trim="assetName" type="text" placeholder="例如 cover / banner"
+            class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF]" />
+        </div>
+
+        <div class="lg:col-span-2">
+          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">覆盖同名</label>
+          <label class="h-[38px] px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center gap-2 cursor-pointer bg-white dark:bg-gray-950">
+            <input v-model="overwrite" type="checkbox" class="rounded border-gray-300" />
+            <span class="text-sm text-gray-600 dark:text-gray-300">overwrite</span>
+          </label>
+        </div>
+
+        <div class="lg:col-span-1 flex items-end">
+          <button @click="fetchAssetList" :disabled="loading"
+            class="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors">
+            刷新
+          </button>
+        </div>
       </div>
 
-      <div class="rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-sm">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div class="lg:col-span-2">
-            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-              资源类型
-            </label>
-            <select v-model="mode"
-              class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF]">
-              <option value="shared">公共资源</option>
-              <option value="article">文章私有资源</option>
-            </select>
+      <div class="mt-5 border-t border-gray-100 dark:border-gray-800 pt-5">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+          <div class="lg:col-span-5">
+            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">选择文件</label>
+            <input ref="fileInputRef" type="file" @change="handleFileChange"
+              class="block w-full text-sm text-gray-600 dark:text-gray-300
+              file:mr-4 file:rounded-lg file:border-0 file:bg-[#40B3FF] file:px-4 file:py-1.5
+              file:text-sm file:font-medium file:text-white hover:file:opacity-90 cursor-pointer" />
           </div>
 
-          <div v-if="mode === 'article'" class="lg:col-span-4">
-            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-              选择文章
-            </label>
-            <select v-model="selectedArticleId"
-              class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF]">
-              <option value="">请选择文章</option>
-              <option v-for="article in articleOptions" :key="article.id" :value="article.id">
-                {{ article.title }}（{{ article.id }}）
-              </option>
-            </select>
-          </div>
-
-          <div v-if="mode === 'article'" class="lg:col-span-3">
-            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-              文章 ID
-            </label>
-            <input :value="selectedArticleId" type="text" readonly
-              class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm text-gray-500 dark:text-gray-400 outline-none" />
-          </div>
-
-          <div v-else class="lg:col-span-3">
-            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-              公共目录
-            </label>
-            <select v-model="sharedScope"
-              class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF]">
-              <option value="images">images</option>
-              <option value="videos">videos</option>
-              <option value="codes">codes</option>
-              <option value="docs">docs</option>
-            </select>
-          </div>
-
-          <div class="lg:col-span-3">
-            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-              文件名（无后缀）
-            </label>
-            <input v-model.trim="assetName" type="text" placeholder="例如 cover / banner / demo-code"
-              class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF]" />
+          <div class="lg:col-span-5">
+            <div class="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-100 dark:border-gray-800 px-4 py-2.5">
+              <p class="text-xs text-gray-400">目标路径预览</p>
+              <p class="mt-0.5 font-mono text-xs text-gray-600 dark:text-gray-300 break-all">
+                {{ previewPath || '请选择参数后生成路径' }}
+              </p>
+            </div>
           </div>
 
           <div class="lg:col-span-2">
-            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-              覆盖同名
-            </label>
-            <label
-              class="h-[42px] px-3 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center gap-2 cursor-pointer bg-white dark:bg-gray-950">
-              <input v-model="overwrite" type="checkbox" class="rounded border-gray-300" />
-              <span class="text-sm text-gray-700 dark:text-gray-300">overwrite</span>
-            </label>
-          </div>
-
-          <div class="lg:col-span-1 flex items-end">
-            <button @click="fetchAssetList" :disabled="loading"
-              class="w-full rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50">
-              刷新
+            <button @click="uploadCurrentFile" :disabled="uploading || !selectedFile"
+              class="w-full rounded-lg bg-[#40B3FF] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition-opacity">
+              {{ uploading ? `上传中 ${uploadProgress}%` : '上传资源' }}
             </button>
           </div>
         </div>
 
-        <div class="mt-5 border-t border-gray-100 dark:border-gray-800 pt-5">
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-            <div class="lg:col-span-5">
-              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                选择文件
-              </label>
-              <input ref="fileInputRef" type="file" @change="handleFileChange" class="block w-full text-sm text-gray-700 dark:text-gray-200
-                file:mr-4 file:rounded-lg file:border-0 file:bg-[#40B3FF] file:px-4 file:py-2
-                file:text-sm file:font-medium file:text-white hover:file:opacity-90" />
-            </div>
+        <p v-if="error" class="mt-3 text-xs text-red-500">{{ error }}</p>
+        <p v-if="successMessage" class="mt-3 text-xs text-emerald-500">{{ successMessage }}</p>
+      </div>
+    </div>
 
-            <div class="lg:col-span-5">
-              <div class="rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-100 dark:border-gray-800 px-4 py-3">
-                <p class="text-xs text-gray-400">目标路径预览</p>
-                <p class="mt-1 font-mono text-sm text-gray-700 dark:text-gray-200 break-all">
-                  {{ previewPath || '请选择参数后生成路径' }}
-                </p>
-              </div>
-            </div>
-
-            <div class="lg:col-span-2">
-              <button @click="uploadCurrentFile" :disabled="uploading || !selectedFile"
-                class="w-full rounded-lg bg-[#40B3FF] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50">
-                {{ uploading ? `上传中 ${uploadProgress}%` : '上传资源' }}
-              </button>
-            </div>
-          </div>
-
-          <p v-if="error" class="mt-4 text-sm text-red-500">
-            {{ error }}
-          </p>
-          <p v-if="successMessage" class="mt-4 text-sm text-emerald-500">
-            {{ successMessage }}
-          </p>
+    <!-- Asset List -->
+    <div class="mt-6 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <span class="w-1 h-4 bg-[#40B3FF] rounded-full"></span>
+            资源列表
+          </h2>
+          <p class="text-xs text-gray-400 mt-0.5 pl-3">{{ currentScopeLabel }}</p>
         </div>
+        <span class="text-xs text-gray-400 px-2 py-0.5 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-full">
+          {{ normalizedAssets.length }} 项
+        </span>
       </div>
 
-      <div
-        class="mt-8 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
-        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">资源列表</h2>
-            <p class="text-sm text-gray-400 mt-1">
-              当前作用域：{{ currentScopeLabel }}
-            </p>
+      <div v-if="loading && normalizedAssets.length === 0" class="px-5 py-16 text-center text-sm text-gray-400">
+        正在加载资源列表...
+      </div>
+
+      <div v-else-if="normalizedAssets.length === 0" class="px-5 py-16 text-center text-sm text-gray-400">
+        暂无资源
+      </div>
+
+      <div v-else class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div v-for="asset in normalizedAssets" :key="asset.path || asset.url || asset.filename"
+          class="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-3 hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-200">
+
+          <!-- Preview -->
+          <div class="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-100 dark:border-gray-800 overflow-hidden h-36 flex items-center justify-center">
+            <img v-if="isImageAsset(asset)" :src="asset.url" :alt="asset.filename || asset.name || 'image'"
+              class="w-full h-full object-contain" />
+            <video v-else-if="isVideoAsset(asset)" :src="asset.url" controls preload="metadata"
+              class="w-full h-full object-contain bg-black"></video>
+            <div v-else class="flex flex-col items-center justify-center text-center p-3">
+              <svg class="w-7 h-7 text-gray-300 dark:text-gray-600 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+              <p class="text-xs text-gray-400">{{ asset.ext || asset.contentType || 'unknown' }}</p>
+            </div>
           </div>
 
-          <div class="text-sm text-gray-400">
-            {{ normalizedAssets.length }} 项
+          <!-- Info -->
+          <div class="mt-3 min-w-0">
+            <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 break-all leading-snug">
+              {{ asset.filename || asset.name || '未命名资源' }}
+            </h3>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              <span class="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 text-[11px] font-medium text-[#40B3FF]">
+                {{ asset.kind || '-' }}
+              </span>
+              <span class="inline-flex items-center rounded-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-2 py-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+                {{ formatSize(asset.size) }}
+              </span>
+            </div>
+            <p class="mt-1.5 text-[11px] text-gray-400 break-all font-mono">{{ asset.path || '-' }}</p>
           </div>
-        </div>
 
-        <div v-if="loading && normalizedAssets.length === 0" class="px-5 py-16 text-center text-sm text-gray-400">
-          正在加载资源列表...
-        </div>
-
-        <div v-else-if="normalizedAssets.length === 0" class="px-5 py-16 text-center text-sm text-gray-400">
-          暂无资源
-        </div>
-
-        <div v-else class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          <div v-for="asset in normalizedAssets" :key="asset.path || asset.url || asset.filename"
-            class="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-3">
-            <!-- 预览 -->
-            <div
-              class="rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 overflow-hidden h-40 flex items-center justify-center">
-              <img v-if="isImageAsset(asset)" :src="asset.url" :alt="asset.filename || asset.name || 'image'"
-                class="w-full h-full object-contain" />
-
-              <video v-else-if="isVideoAsset(asset)" :src="asset.url" controls preload="metadata"
-                class="w-full h-full object-contain bg-black"></video>
-
-              <div v-else-if="isCodeAsset(asset)"
-                class="w-full h-full p-3 flex flex-col items-center justify-center text-center">
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-200">代码文件</p>
-                <p class="mt-1 text-xs text-gray-400 break-all">{{ asset.ext || asset.contentType || 'code' }}</p>
-              </div>
-
-              <div v-else-if="isDocAsset(asset)"
-                class="w-full h-full p-3 flex flex-col items-center justify-center text-center">
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-200">文档资源</p>
-                <p class="mt-1 text-xs text-gray-400 break-all">{{ asset.ext || asset.contentType || 'doc' }}</p>
-              </div>
-
-              <div v-else class="w-full h-full p-3 flex flex-col items-center justify-center text-center">
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-200">不可预览</p>
-                <p class="mt-1 text-xs text-gray-400 break-all">{{ asset.contentType || asset.ext || 'unknown' }}</p>
-              </div>
-            </div>
-
-            <!-- 基本信息 -->
-            <div class="mt-3 min-w-0">
-              <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 break-all">
-                {{ asset.filename || asset.name || '未命名资源' }}
-              </h3>
-
-              <div class="mt-2 flex flex-wrap gap-2">
-                <span
-                  class="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 text-[11px] font-medium text-[#40B3FF]">
-                  {{ asset.kind || '-' }}
-                </span>
-                <span
-                  class="inline-flex items-center rounded-full bg-gray-50 dark:bg-gray-950 px-2 py-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">
-                  {{ formatSize(asset.size) }}
-                </span>
-                <span
-                  class="inline-flex items-center rounded-full bg-gray-50 dark:bg-gray-950 px-2 py-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">
-                  {{ asset.ext || asset.contentType || 'unknown' }}
-                </span>
-              </div>
-
-              <p class="mt-2 text-xs text-gray-400 break-all">
-                {{ asset.path || '-' }}
-              </p>
-            </div>
-
-            <!-- 操作 -->
-            <div class="mt-3 flex flex-wrap gap-2">
-              <a v-if="asset.url" :href="asset.url" target="_blank" rel="noopener noreferrer"
-                class="rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-                打开
-              </a>
-
-              <button @click="copyText(asset.url || '')"
-                class="rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
-                复制 URL
-              </button>
-
-              <button @click="deleteAssetItem(asset.path || '')" :disabled="deletingPath === asset.path"
-                class="rounded-lg bg-red-500 px-2.5 py-1.5 text-xs text-white hover:opacity-90 disabled:opacity-50">
-                {{ deletingPath === asset.path ? '删除中...' : '删除' }}
-              </button>
-            </div>
+          <!-- Actions -->
+          <div class="mt-3 flex flex-wrap gap-2">
+            <a v-if="asset.url" :href="asset.url" target="_blank" rel="noopener noreferrer"
+              class="rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+              打开
+            </a>
+            <button @click="copyText(asset.url || '')"
+              class="rounded-lg border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+              复制 URL
+            </button>
+            <button @click="deleteAssetItem(asset.path || '')" :disabled="deletingPath === asset.path"
+              class="rounded-lg border border-red-100 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-2.5 py-1.5 text-xs text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 disabled:opacity-50 transition-colors">
+              {{ deletingPath === asset.path ? '删除中...' : '删除' }}
+            </button>
           </div>
         </div>
       </div>
-    </main>
-  </div>
+    </div>
+  </main>
 </template>
-
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import Header from '@/components/Header.vue';
 import { assetsApi, type AssetKind, type AssetRecord } from '@/api/assets';
 import { articlesApi, type Article } from '@/api/articles';
 

@@ -1,52 +1,97 @@
-// src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
-
-import Home from '@/views/Home.vue' 
+import SiteLayout from '@/layouts/SiteLayout.vue'
+import AdminLayout from '@/layouts/AdminLayout.vue'
+import { getToken } from '@/api/auth'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { 
-      path: '/', 
-      component: Home 
-    },
-    { 
-      path: '/activity-posts', 
-      component: () => import('@/views/ActivityPosts.vue') 
-    },
-    { 
-      path: '/tech-tutorials', 
-      component: () => import('@/views/TechTutorials.vue') 
-    },
-    { 
-      path: '/reader', 
-      component: () => import('@/views/Reader.vue') 
-    },
-    { 
-      path: '/about',
-      component: () => import('@/views/About.vue') 
-    },
-    { 
-      path: '/honor-wall',
-      component: () => import('@/views/HonorWall.vue') 
-    },
-    { 
-      path: '/member-wall',
-      component: () => import('@/views/MemberWall.vue') 
-    },
-    { 
-      path: '/admin/articles', 
-      component: () => import('@/views/AdminReader.vue'),
-    },
+    // 前台
     {
-      path: '/admin/assets',
-      component: () => import('@/views/AssetManager.vue'),
+      path: '/',
+      component: SiteLayout,
+      children: [
+        {
+          path: '',
+          component: () => import('@/views/Home.vue'),
+        },
+        {
+          path: 'activity-posts',
+          component: () => import('@/views/ActivityPosts.vue'),
+        },
+        {
+          path: 'tech-tutorials',
+          component: () => import('@/views/TechTutorials.vue'),
+        },
+        {
+          path: 'reader',
+          component: () => import('@/views/Reader.vue'),
+        },
+        {
+          path: 'about',
+          component: () => import('@/views/About.vue'),
+        },
+        {
+          path: 'honor-wall',
+          component: () => import('@/views/HonorWall.vue'),
+        },
+        {
+          path: 'member-wall',
+          component: () => import('@/views/MemberWall.vue'),
+        },
+      ],
     },
-    { 
-      path: '/:pathMatch(.*)*', 
-      redirect: '/' 
-    }
-  ]
+
+    // 后台登录页
+    {
+      path: '/admin/login',
+      component: () => import('@/views/AdminLogin.vue'),
+    },
+
+    // 后台管理页
+    {
+      path: '/admin',
+      component: AdminLayout,
+      meta: { requiresAuth: true },
+      children: [
+        {
+          path: '',
+          redirect: '/admin/articles',
+        },
+        {
+          path: 'articles',
+          component: () => import('@/views/AdminReader.vue'),
+        },
+        {
+          path: 'assets',
+          component: () => import('@/views/AssetManager.vue'),
+        },
+      ],
+    },
+
+    // 兜底
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/',
+    },
+  ],
+})
+
+router.beforeEach((to, _from, next) => {
+  const token = getToken()
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+
+  if (requiresAuth && !token) {
+    next('/admin/login')
+    return
+  }
+
+  if (to.path === '/admin/login' && token) {
+    next('/admin/articles')
+    return
+  }
+
+  next()
 })
 
 export default router

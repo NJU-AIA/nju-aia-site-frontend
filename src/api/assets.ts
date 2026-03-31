@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getToken } from '@/api/auth';
 
 export type AssetKind = 'article' | 'shared';
 
@@ -45,6 +46,16 @@ const http = axios.create({
   timeout: 20000,
 });
 
+/** 请求拦截器：自动带 token */
+http.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+/** 响应拦截器 */
 http.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -57,22 +68,16 @@ http.interceptors.response.use(
 );
 
 export const assetsApi = {
-  /**
-   * 获取静态资源列表
-   * GET /assets
-   */
   getAssets(params?: GetAssetsParams) {
     return http.get<AssetsListResponse | AssetRecord[]>('/assets', {
       params,
     });
   },
 
-  /**
-   * 上传静态资源
-   * POST /assets
-   * multipart/form-data
-   */
-  uploadAsset(data: UploadAssetRequest, onUploadProgress?: (percent: number) => void) {
+  uploadAsset(
+    data: UploadAssetRequest,
+    onUploadProgress?: (percent: number) => void
+  ) {
     const formData = new FormData();
     formData.append('scope', data.scope);
     formData.append('name', data.name);
@@ -96,10 +101,6 @@ export const assetsApi = {
     });
   },
 
-  /**
-   * 删除静态资源
-   * DELETE /assets?path=...
-   */
   deleteAsset(path: string) {
     return http.delete<void>('/assets', {
       params: { path },
