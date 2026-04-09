@@ -39,6 +39,14 @@ const router = createRouter({
           path: 'member-wall',
           component: () => import('@/views/MemberWall.vue'),
         },
+        {
+          path: 'gallery/:entry(.*)*',
+          component: () => import('@/views/Gallery.vue'),
+        },
+        {
+          path: 'livecodes',
+          component: () => import('@/views/Livecodes.vue'),
+        },
       ],
     },
 
@@ -65,6 +73,10 @@ const router = createRouter({
         {
           path: 'assets',
           component: () => import('@/views/AssetManager.vue'),
+        },
+        {
+          path: 'livecodes',
+          component: () => import('@/views/AdminLivecodes.vue'),
         },
       ],
     },

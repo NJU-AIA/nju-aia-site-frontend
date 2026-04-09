@@ -1,5 +1,6 @@
 /* src/style.css */
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* Tailwind v4 dark variant: support html/body class and data-theme fallback */
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 

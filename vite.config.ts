@@ -20,6 +20,11 @@ export default defineConfig({
         target: 'https://nju-aia.com',
         changeOrigin: true,
       },
+      '/livecodes-api': {
+        target: 'http://192.168.1.87:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/livecodes-api/, ''),
+      },
     },
   },
 })

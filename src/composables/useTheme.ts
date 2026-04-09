@@ -1,5 +1,15 @@
 import { ref, watch, onMounted } from 'vue'
 
+const applyThemeToDom = (dark: boolean) => {
+  const root = document.documentElement
+  const body = document.body
+  root.classList.toggle('dark', dark)
+  body.classList.toggle('dark', dark)
+  root.setAttribute('data-theme', dark ? 'dark' : 'light')
+  body.setAttribute('data-theme', dark ? 'dark' : 'light')
+  root.style.colorScheme = dark ? 'dark' : 'light'
+}
+
 // 使用全局单例模式，确保整个应用共享同一个状态
 const isDark = ref(false)
 
@@ -9,11 +19,10 @@ export function useTheme() {
     const savedTheme = localStorage.getItem('theme')
     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       isDark.value = true
-      document.documentElement.classList.add('dark')
     } else {
       isDark.value = false
-      document.documentElement.classList.remove('dark')
     }
+    applyThemeToDom(isDark.value)
   }
 
   // 切换主题方法
@@ -23,11 +32,10 @@ export function useTheme() {
 
   // 监听状态变化，同步到 DOM 和 localStorage
   watch(isDark, (newVal) => {
+    applyThemeToDom(newVal)
     if (newVal) {
-      document.documentElement.classList.add('dark')
       localStorage.setItem('theme', 'dark')
     } else {
-      document.documentElement.classList.remove('dark')
       localStorage.setItem('theme', 'light')
     }
   })

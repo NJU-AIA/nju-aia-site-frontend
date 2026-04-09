@@ -124,13 +124,25 @@ const splitGridClass = computed(() => {
   background: rgba(20, 184, 166, 0.08);
 }
 
+:global(.dark) .slide-prose :deep(.ast-inline-code) {
+  background: rgba(45, 212, 191, 0.18);
+}
+
 .slide-prose :deep(.ast-link) {
   color: rgb(13 148 136);
+}
+
+:global(.dark) .slide-prose :deep(.ast-link) {
+  color: rgb(45 212 191);
 }
 
 .slide-prose :deep(.ast-blockquote) {
   border-left-color: rgb(45 212 191);
   padding-left: 1.1rem;
+}
+
+:global(.dark) .slide-prose :deep(.ast-blockquote) {
+  background: rgba(15, 23, 42, 0.35);
 }
 
 .slide-prose :deep(.ast-code-frame),

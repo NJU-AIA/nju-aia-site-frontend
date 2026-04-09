@@ -180,7 +180,7 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   color: #334155;
 }
 
-:deep(.dark p) {
+:global(.dark) :deep(p) {
   color: #cbd5e1;
 }
 
@@ -192,11 +192,21 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   border-radius: 0.25rem;
 }
 
+:global(.dark) :deep(code) {
+  background: rgba(148, 163, 184, 0.16);
+  color: #e2e8f0;
+}
+
 :deep(.shiki) {
   border-radius: 0.75rem !important;
   padding: 1.25rem !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
   border: 1px solid rgba(100, 100, 100, 0.1) !important;
+}
+
+:global(.dark) :deep(.shiki) {
+  border-color: rgba(148, 163, 184, 0.2) !important;
+  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.55) !important;
 }
 
 /* 悬停效果 */

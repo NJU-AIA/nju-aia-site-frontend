@@ -264,8 +264,17 @@ const difficultyConfig = computed(() => {
   border-top: 1px solid #e2e8f0;
 }
 
-:deep(.dark td) {
+:global(.dark) :deep(td) {
   border-top-color: #334155;
+}
+
+:global(.dark) :deep(code) {
+  background: rgba(148, 163, 184, 0.2);
+  color: #e2e8f0;
+}
+
+:global(.dark) :deep(blockquote) {
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.14), transparent);
 }
 
 :deep(tbody tr:hover) {
