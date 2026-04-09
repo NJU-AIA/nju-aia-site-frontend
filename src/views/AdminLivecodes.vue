@@ -97,7 +97,29 @@
         <div class="min-h-0 flex-1 overflow-y-auto p-3">
           <div class="mb-3 flex items-center justify-between">
             <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Block 列表</h3>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
+              <button
+                class="rounded border px-2 py-1 text-xs"
+                :class="
+                  viewMode === 'edit'
+                    ? 'border-blue-200 bg-blue-50 text-[#40B3FF] dark:border-blue-900/50 dark:bg-blue-950/30'
+                    : 'border-gray-200 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
+                "
+                @click="viewMode = 'edit'"
+              >
+                编辑模式
+              </button>
+              <button
+                class="rounded border px-2 py-1 text-xs"
+                :class="
+                  viewMode === 'preview'
+                    ? 'border-blue-200 bg-blue-50 text-[#40B3FF] dark:border-blue-900/50 dark:bg-blue-950/30'
+                    : 'border-gray-200 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
+                "
+                @click="viewMode = 'preview'"
+              >
+                预览模式
+              </button>
               <button
                 class="rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                 @click="addDraftBlock('markdown')"
@@ -152,7 +174,7 @@
                 </div>
               </div>
 
-              <div class="mb-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+              <div v-if="viewMode === 'edit'" class="mb-2 grid grid-cols-1 gap-2 md:grid-cols-2">
                 <select
                   v-model="block.type"
                   class="rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs outline-none focus:border-[#40B3FF] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
@@ -169,33 +191,50 @@
                 />
               </div>
 
-              <textarea
-                v-model="block.content"
-                rows="8"
-                placeholder="输入 block 内容"
-                class="w-full rounded-md border border-gray-200 bg-white px-2 py-2 font-mono text-xs leading-relaxed outline-none focus:border-[#40B3FF] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-              />
-
-              <div class="admin-livecode-preview mt-3 border-t border-gray-100 pt-3 dark:border-gray-800">
-                <p class="mb-2 text-[11px] text-gray-400">实时预览</p>
-
-                <div
-                  v-if="block.type === 'markdown'"
-                  class="rounded-md bg-gray-50 p-3 text-sm leading-7 text-gray-800 dark:bg-gray-950 dark:text-gray-200"
-                >
-                  <AstRenderer
-                    v-for="(node, nodeIndex) in parseMarkdownNodes(block.content)"
-                    :key="nodeKey(node, nodeIndex)"
-                    :node="node"
+              <template v-if="block.type === 'code'">
+                <div v-if="viewMode === 'edit'">
+                  <p class="mb-2 text-[11px] text-gray-400">代码编辑</p>
+                  <textarea
+                    v-model="block.content"
+                    rows="12"
+                    placeholder="输入代码内容"
+                    class="w-full rounded-md border border-gray-200 bg-white px-2 py-2 font-mono text-xs leading-relaxed outline-none focus:border-[#40B3FF] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                   />
                 </div>
-                <div v-else class="rounded-md bg-gray-50 p-2 dark:bg-gray-950">
-                  <AstRenderer
-                    :key="`code-preview-${index}-${block.language || 'text'}-${block.content}`"
-                    :node="toCodeNode(block)"
-                  />
+
+                <div v-else class="admin-livecode-preview">
+                  <p class="mb-2 text-[11px] text-gray-400">高亮预览</p>
+                  <div class="rounded-md bg-gray-50 p-2 dark:bg-gray-950">
+                    <AstRenderer
+                      :key="`code-preview-${index}-${block.language || 'text'}-${block.content}`"
+                      :node="toCodeNode(block)"
+                    />
+                  </div>
                 </div>
-              </div>
+              </template>
+
+              <template v-else>
+                <textarea
+                  v-if="viewMode === 'edit'"
+                  v-model="block.content"
+                  rows="8"
+                  placeholder="输入 block 内容"
+                  class="w-full rounded-md border border-gray-200 bg-white px-2 py-2 font-mono text-xs leading-relaxed outline-none focus:border-[#40B3FF] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+                />
+
+                <div v-else class="admin-livecode-preview border-t border-gray-100 pt-3 dark:border-gray-800">
+                  <p class="mb-2 text-[11px] text-gray-400">实时预览</p>
+                  <div
+                    class="rounded-md bg-gray-50 p-3 text-sm leading-7 text-gray-800 dark:bg-gray-950 dark:text-gray-200"
+                  >
+                    <AstRenderer
+                      v-for="(node, nodeIndex) in parseMarkdownNodes(block.content)"
+                      :key="nodeKey(node, nodeIndex)"
+                      :node="node"
+                    />
+                  </div>
+                </div>
+              </template>
             </article>
 
             <p v-if="form.blocks.length === 0" class="text-xs text-gray-400">暂无 block，点击上方按钮添加。</p>
@@ -248,6 +287,7 @@ const loading = ref(false)
 const message = ref('')
 const error = ref('')
 const original = ref<LivecodeDocument | null>(null)
+const viewMode = ref<'edit' | 'preview'>('edit')
 const isDark = ref(typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false)
 let darkModeObserver: MutationObserver | null = null
 
@@ -292,18 +332,18 @@ function parseMarkdownNodes(content: string): any[] {
   }
 }
 
+function nodeKey(node: any, index: number): string {
+  const value = typeof node?.value === 'string' ? node.value : ''
+  const lang = typeof node?.lang === 'string' ? node.lang : ''
+  return `${index}-${node?.type || 'unknown'}-${lang}-${value}`
+}
+
 function toCodeNode(block: EditableBlock) {
   return {
     type: 'code',
     lang: block.language || 'text',
     value: block.content || '',
   }
-}
-
-function nodeKey(node: any, index: number): string {
-  const value = typeof node?.value === 'string' ? node.value : ''
-  const lang = typeof node?.lang === 'string' ? node.lang : ''
-  return `${index}-${node?.type || 'unknown'}-${lang}-${value}`
 }
 
 function orderBlocks(doc: LivecodeDocument): LivecodeBlock[] {

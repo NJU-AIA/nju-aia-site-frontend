@@ -38,7 +38,7 @@
         <div v-if="loadingDetail" class="py-12 text-center text-sm text-gray-400">加载中...</div>
         <div v-else-if="!currentDoc" class="py-12 text-center text-sm text-gray-400">请选择左侧代码文件</div>
         <template v-else>
-          <div class="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-3 dark:border-gray-800">
+          <!-- <div class="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-3 dark:border-gray-800">
             <div>
               <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ currentDoc.slug }}</h1>
               <p class="text-xs text-gray-400">{{ formatDate(currentDoc.publishedAt) }}</p>
@@ -49,7 +49,7 @@
             >
               {{ copiedAll ? '已复制全部' : '复制全部' }}
             </button>
-          </div>
+          </div> -->
 
           <div class="space-y-3">
             <article
@@ -59,13 +59,14 @@
             >
               <div class="mb-2 flex items-center justify-between">
                 <p class="text-xs text-gray-500">Block #{{ item.index + 1 }} · {{ item.block.type }}<span v-if="item.block.language"> · {{ item.block.language }}</span></p>
-                <button
-                  v-if="item.block.type === 'code'"
-                  class="rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-                  @click="copyText(item.block.content, 'block', item.block.id, item.index)"
-                >
-                  {{ copyButtonLabel(item.block.id, item.index) }}
-                </button>
+                <div v-if="item.block.type === 'code'" class="flex items-center gap-2">
+                  <button
+                    class="rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    @click="copyText(item.block.content, 'block', item.block.id, item.index)"
+                  >
+                    {{ copyButtonLabel(item.block.id, item.index) }}
+                  </button>
+                </div>
               </div>
 
               <div
