@@ -30,6 +30,18 @@ function mapArticle(article: Article): TechTutorialItem {
   };
 }
 
+function toTimestamp(value?: string): number {
+  if (!value) return 0;
+  const ts = new Date(value).getTime();
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+function compareArticleByLatest(a: Article, b: Article): number {
+  const ta = toTimestamp(a.date) || toTimestamp(a.updatedAt) || toTimestamp(a.createdAt);
+  const tb = toTimestamp(b.date) || toTimestamp(b.updatedAt) || toTimestamp(b.createdAt);
+  return tb - ta;
+}
+
 export const useTechTutorialsStore = defineStore('techTutorials', {
   state: () => ({
     tutorials: [] as TechTutorialItem[],
@@ -60,6 +72,7 @@ export const useTechTutorialsStore = defineStore('techTutorials', {
 
         this.tutorials = (data.items || [])
           .filter((item) => item.category === 'tutorial')
+          .sort(compareArticleByLatest)
           .map(mapArticle);
 
         this.loaded = true;

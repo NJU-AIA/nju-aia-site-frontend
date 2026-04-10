@@ -1,4 +1,4 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 import { getToken } from '@/api/auth';
 
 export type ArticleCategory = 'activity' | 'tutorial';
@@ -46,16 +46,22 @@ export interface CreateArticleResponse {
   id: string;
 }
 
-const http = axios.create({
+interface ArticleQueryOptions {
+  withAuth?: boolean;
+}
+
+const baseConfig = {
   baseURL: '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
-});
+};
 
-/** 请求拦截器：自动带 token */
-http.interceptors.request.use((config) => {
+const publicHttp = axios.create(baseConfig);
+const authedHttp = axios.create(baseConfig);
+
+authedHttp.interceptors.request.use((config) => {
   const token = getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -63,36 +69,37 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
-/** 响应拦截器 */
-http.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const message =
-      error?.response?.data?.error ||
-      error?.message ||
-      '请求失败';
-    return Promise.reject(new Error(message));
-  }
-);
+const handleResponseError = (error: any) => {
+  const message =
+    error?.response?.data?.error ||
+    error?.message ||
+    '请求失败';
+  return Promise.reject(new Error(message));
+};
+
+publicHttp.interceptors.response.use((response) => response, handleResponseError);
+authedHttp.interceptors.response.use((response) => response, handleResponseError);
 
 export const articlesApi = {
-  getArticles() {
-    return http.get<ArticleListResponse>('/articles');
+  getArticles(options?: ArticleQueryOptions) {
+    const client = options?.withAuth ? authedHttp : publicHttp;
+    return client.get<ArticleListResponse>('/articles');
   },
 
-  getArticleById(id: string) {
-    return http.get<Article>(`/articles/${id}`);
+  getArticleById(id: string, options?: ArticleQueryOptions) {
+    const client = options?.withAuth ? authedHttp : publicHttp;
+    return client.get<Article>(`/articles/${id}`);
   },
 
   createArticle(data: CreateArticleRequest) {
-    return http.post<CreateArticleResponse>('/articles', data);
+    return authedHttp.post<CreateArticleResponse>('/articles', data);
   },
 
   updateArticle(id: string, data: CreateArticleRequest) {
-    return http.put<void>(`/articles/${id}`, data);
+    return authedHttp.put<void>(`/articles/${id}`, data);
   },
 
   deleteArticle(id: string) {
-    return http.delete<void>(`/articles/${id}`);
+    return authedHttp.delete<void>(`/articles/${id}`);
   },
 };

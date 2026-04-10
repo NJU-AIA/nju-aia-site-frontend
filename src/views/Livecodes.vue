@@ -146,16 +146,16 @@ const renderedBlocks = computed(() => {
   })
 })
 
-const allContentText = computed(() => {
-  return orderedBlocks.value
-    .map((block) => {
-      if (block.type === 'code') {
-        return `\`\`\`${block.language || ''}\n${block.content}\n\`\`\``
-      }
-      return block.content
-    })
-    .join('\n\n')
-})
+// const allContentText = computed(() => {
+//   return orderedBlocks.value
+//     .map((block) => {
+//       if (block.type === 'code') {
+//         return `\`\`\`${block.language || ''}\n${block.content}\n\`\`\``
+//       }
+//       return block.content
+//     })
+//     .join('\n\n')
+// })
 
 function parseMarkdownNodes(content: string): any[] {
   try {

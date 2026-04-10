@@ -340,7 +340,7 @@ function validateScope() {
 
 async function fetchArticles() {
   try {
-    const { data } = await articlesApi.getArticles();
+    const { data } = await articlesApi.getArticles({ withAuth: true });
     const items = Array.isArray(data.items) ? data.items : [];
     articleOptions.value = items.map((item: Article) => ({
       id: item.id,

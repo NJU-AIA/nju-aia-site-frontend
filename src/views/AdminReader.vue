@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="w-full h-[calc(100vh-4rem)] overflow-hidden bg-white dark:bg-gray-950 flex transition-colors duration-300 relative">
 
     <!-- Sidebar -->
@@ -622,6 +622,18 @@ function getTodayDateString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function toTimestamp(value?: string): number {
+  if (!value) return 0;
+  const ts = new Date(value).getTime();
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+function compareArticleByLatest(a: Article, b: Article): number {
+  const ta = toTimestamp(a.date) || toTimestamp(a.updatedAt) || toTimestamp(a.createdAt);
+  const tb = toTimestamp(b.date) || toTimestamp(b.updatedAt) || toTimestamp(b.createdAt);
+  return tb - ta;
+}
+
 function mapArticleToListItem(article: Article): ArticleListItem {
   return {
     id: article.id,
@@ -731,9 +743,9 @@ async function fetchArticles() {
   error.value = '';
 
   try {
-    const { data } = await articlesApi.getArticles();
+    const { data } = await articlesApi.getArticles({ withAuth: true });
     const items = Array.isArray(data.items) ? data.items : [];
-    articles.value = items.map(mapArticleToListItem);
+    articles.value = [...items].sort(compareArticleByLatest).map(mapArticleToListItem);
 
     if (!selectedId.value && !isCreating.value && articles.value.length > 0) {
       await selectArticle(articles.value[0].id);
@@ -755,7 +767,7 @@ async function selectArticle(id: string) {
   currentSlideIndex.value = 0;
 
   try {
-    const { data } = await articlesApi.getArticleById(id);
+    const { data } = await articlesApi.getArticleById(id, { withAuth: true });
     applyArticleToForm(data);
     await fetchArticleAssets();
   } catch (err) {

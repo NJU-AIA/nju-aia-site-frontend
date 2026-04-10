@@ -61,6 +61,18 @@ function mapArticleToDocMeta(article: Article): ReaderDocMeta {
   };
 }
 
+function toTimestamp(value?: string): number {
+  if (!value) return 0;
+  const ts = new Date(value).getTime();
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
+function compareArticleByLatest(a: Article, b: Article): number {
+  const ta = toTimestamp(a.date) || toTimestamp(a.updatedAt) || toTimestamp(a.createdAt);
+  const tb = toTimestamp(b.date) || toTimestamp(b.updatedAt) || toTimestamp(b.createdAt);
+  return tb - ta;
+}
+
 export const useReaderStore = defineStore('reader', {
   state: () => ({
     docList: [] as ReaderDocMeta[],
@@ -95,7 +107,7 @@ export const useReaderStore = defineStore('reader', {
         const { data } = await articlesApi.getArticles();
         const items = Array.isArray(data.items) ? data.items : [];
 
-        this.docList = items.map(mapArticleToDocMeta);
+        this.docList = [...items].sort(compareArticleByLatest).map(mapArticleToDocMeta);
 
         for (const doc of this.docList) {
           this.documentModes[doc.id] = normalizeViewMode(this.documentModes[doc.id] || doc.defaultMode);

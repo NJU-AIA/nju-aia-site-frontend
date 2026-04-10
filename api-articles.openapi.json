@@ -49,8 +49,7 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/article.CreateRequest"
-              },
-              "examples": {}
+              }
             }
           },
           "required": true
@@ -83,11 +82,7 @@
             "headers": {}
           }
         },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        "security": []
       }
     },
     "/articles/{id}": {
@@ -160,8 +155,7 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/article.CreateRequest"
-              },
-              "examples": {}
+              }
             }
           },
           "required": true
@@ -183,11 +177,7 @@
             "headers": {}
           }
         },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        "security": []
       },
       "delete": {
         "summary": "删除文章",
@@ -214,11 +204,7 @@
             "headers": {}
           }
         },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        "security": []
       }
     }
   },
@@ -353,12 +339,7 @@
       }
     },
     "responses": {},
-    "securitySchemes": {
-      "bearer": {
-        "type": "http",
-        "scheme": "bearer"
-      }
-    }
+    "securitySchemes": {}
   },
   "servers": [],
   "security": []
