@@ -1,4 +1,4 @@
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 
 const applyThemeToDom = (dark: boolean) => {
   const root = document.documentElement
@@ -10,43 +10,50 @@ const applyThemeToDom = (dark: boolean) => {
   root.style.colorScheme = dark ? 'dark' : 'light'
 }
 
-// 使用全局单例模式，确保整个应用共享同一个状态
 const isDark = ref(false)
+let initialized = false
+let watchBound = false
 
-export function useTheme() {
-  // 初始化主题（优先读取 localStorage，其次读取系统偏好）
-  const initTheme = () => {
-    const savedTheme = localStorage.getItem('theme')
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      isDark.value = true
-    } else {
-      isDark.value = false
-    }
-    applyThemeToDom(isDark.value)
+const initTheme = () => {
+  if (typeof window === 'undefined') return
+
+  const savedTheme = localStorage.getItem('theme')
+  if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    isDark.value = true
+  } else {
+    isDark.value = false
   }
 
-  // 切换主题方法
+  applyThemeToDom(isDark.value)
+}
+
+const ensureInitialized = () => {
+  if (initialized) return
+  initialized = true
+  initTheme()
+}
+
+const bindWatchOnce = () => {
+  if (watchBound) return
+  watchBound = true
+
+  watch(isDark, (newVal) => {
+    if (typeof window === 'undefined') return
+    applyThemeToDom(newVal)
+    localStorage.setItem('theme', newVal ? 'dark' : 'light')
+  })
+}
+
+export function useTheme() {
+  ensureInitialized()
+  bindWatchOnce()
+
   const toggleTheme = () => {
     isDark.value = !isDark.value
   }
 
-  // 监听状态变化，同步到 DOM 和 localStorage
-  watch(isDark, (newVal) => {
-    applyThemeToDom(newVal)
-    if (newVal) {
-      localStorage.setItem('theme', 'dark')
-    } else {
-      localStorage.setItem('theme', 'light')
-    }
-  })
-
-  // 仅在客户端挂载时执行初始化
-  onMounted(() => {
-    initTheme()
-  })
-
   return {
     isDark,
-    toggleTheme
+    toggleTheme,
   }
 }

@@ -199,6 +199,44 @@ const getColorScheme = (index: number) => {
   color: #cbd5e1;
 }
 
+/* AstRenderer has its own .ast-* classes. Use class-based overrides here
+   so color mode typography can reliably win in both light/dark themes. */
+.prose-color :deep(.ast-paragraph),
+.prose-color :deep(.ast-list-item),
+.prose-color :deep(.ast-table-cell) {
+  color: #334155;
+}
+
+:global(.dark) .prose-color :deep(.ast-paragraph),
+:global(.dark) .prose-color :deep(.ast-list-item),
+:global(.dark) .prose-color :deep(.ast-table-cell) {
+  color: #cbd5e1;
+}
+
+.prose-color :deep(.ast-heading),
+.prose-color :deep(.ast-heading-3),
+.prose-color :deep(.ast-heading-4),
+.prose-color :deep(.ast-heading-5),
+.prose-color :deep(.ast-heading-6) {
+  color: #1e293b;
+}
+
+:global(.dark) .prose-color :deep(.ast-heading),
+:global(.dark) .prose-color :deep(.ast-heading-3),
+:global(.dark) .prose-color :deep(.ast-heading-4),
+:global(.dark) .prose-color :deep(.ast-heading-5),
+:global(.dark) .prose-color :deep(.ast-heading-6) {
+  color: #f1f5f9;
+}
+
+.prose-color :deep(.ast-link) {
+  color: #0f766e;
+}
+
+:global(.dark) .prose-color :deep(.ast-link) {
+  color: #5eead4;
+}
+
 :deep(p) {
   margin-bottom: 1.25rem;
   font-size: 1.0625rem;

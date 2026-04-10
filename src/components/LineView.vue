@@ -188,6 +188,67 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
 .line-root {
   font-family: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif;
   -webkit-font-smoothing: antialiased;
+
+  --line-ornament: #1c1917;
+  --line-body-color: #292524;
+  --line-h3-color: #1c1917;
+  --line-h3-border: #e7e5e4;
+  --line-ol-index-color: #1c1917;
+  --line-ol-index-border: #57534e;
+  --line-inline-code-bg: #fafaf9;
+  --line-inline-code-border: #d6d3d1;
+  --line-inline-code-color: #1c1917;
+  --line-shiki-bg: #fafaf9;
+  --line-shiki-border: #292524;
+  --line-table-border: #292524;
+  --line-table-cell-border: #d6d3d1;
+  --line-th-bg: #292524;
+  --line-th-color: #fafaf9;
+  --line-quote-border-strong: #292524;
+  --line-quote-border-soft: #e7e5e4;
+  --line-quote-bg: #fafaf9;
+}
+
+:global(.dark) .line-root {
+  --line-ornament: #fafaf9;
+  --line-body-color: #e7e5e4;
+  --line-h3-color: #fafaf9;
+  --line-h3-border: #44403c;
+  --line-ol-index-color: #fafaf9;
+  --line-ol-index-border: #78716c;
+  --line-inline-code-bg: #1c1917;
+  --line-inline-code-border: #44403c;
+  --line-inline-code-color: #fafaf9;
+  --line-shiki-bg: #0c0a09;
+  --line-shiki-border: #e7e5e4;
+  --line-table-border: #e7e5e4;
+  --line-table-cell-border: #44403c;
+  --line-th-bg: #fafaf9;
+  --line-th-color: #1c1917;
+  --line-quote-border-strong: #fafaf9;
+  --line-quote-border-soft: #44403c;
+  --line-quote-bg: #1c1917;
+
+  --ast-paragraph-color: var(--line-body-color);
+  --ast-heading-color: var(--line-h3-color);
+  --ast-table-cell-color-dark: var(--line-body-color);
+  --ast-inline-code-bg-dark: var(--line-inline-code-bg);
+  --ast-inline-code-color-dark: var(--line-inline-code-color);
+  --ast-table-row-border-dark: var(--line-table-cell-border);
+  --ast-blockquote-border-dark: var(--line-quote-border-strong);
+  --ast-blockquote-color-dark: var(--line-body-color);
+}
+
+.line-root {
+  --ast-paragraph-color: var(--line-body-color);
+  --ast-heading-color: var(--line-h3-color);
+  --ast-link-color: inherit;
+  --ast-table-cell-color: var(--line-body-color);
+  --ast-inline-code-bg: var(--line-inline-code-bg);
+  --ast-inline-code-color: var(--line-inline-code-color);
+  --ast-table-row-border: var(--line-table-cell-border);
+  --ast-blockquote-border: var(--line-quote-border-strong);
+  --ast-blockquote-color: var(--line-body-color);
 }
 
 /* 四角装饰线 */
@@ -208,12 +269,7 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
 .corner-line::after {
   content: '';
   position: absolute;
-  background: #1c1917;
-}
-
-:global(.dark) .corner-line::before,
-:global(.dark) .corner-line::after {
-  background: #fafaf9;
+  background: var(--line-ornament);
 }
 
 .top-left {
@@ -295,11 +351,7 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
 /* 内容排版 */
 .prose-line {
   line-height: 1.8;
-  color: #292524;
-}
-
-:global(.dark) .prose-line {
-  color: #e7e5e4;
+  color: var(--line-body-color);
 }
 
 :deep(p) {
@@ -313,14 +365,9 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   font-weight: 400;
   margin-top: 2rem;
   margin-bottom: 1rem;
-  color: #1c1917;
-  border-bottom: 1px solid #e7e5e4;
+  color: var(--line-h3-color);
+  border-bottom: 1px solid var(--line-h3-border);
   padding-bottom: 0.5rem;
-}
-
-:global(.dark) :deep(h3) {
-  color: #fafaf9;
-  border-bottom-color: #44403c;
 }
 
 /* 列表样式 */
@@ -367,18 +414,13 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   top: 0;
   width: 2rem;
   height: 2rem;
-  border: 2px solid #57534e;
+  border: 2px solid var(--line-ol-index-border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 0.875rem;
-  color: #1c1917;
-}
-
-:global(.dark) :deep(ol li::before) {
-  color: #fafaf9;
-  border-color: #78716c;
+  color: var(--line-ol-index-color);
 }
 
 /* 代码样式 */
@@ -386,30 +428,19 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", monospace;
   font-size: 0.9em;
   padding: 0.2em 0.5em;
-  background: #fafaf9;
-  border: 1px solid #d6d3d1;
-  color: #1c1917;
-}
-
-:global(.dark) :deep(code) {
-  background: #1c1917;
-  border-color: #44403c;
-  color: #fafaf9;
+  background: var(--line-inline-code-bg);
+  border: 1px solid var(--line-inline-code-border);
+  color: var(--line-inline-code-color);
 }
 
 :deep(.shiki) {
   margin: 1.5rem 0 !important;
   padding: 1.5rem !important;
-  border: 2px solid #292524 !important;
+  border: 2px solid var(--line-shiki-border) !important;
   border-radius: 0 !important;
-  background: #fafaf9 !important;
+  background: var(--line-shiki-bg) !important;
   box-shadow: none !important;
   position: relative;
-}
-
-:global(.dark) :deep(.shiki) {
-  background: #0c0a09 !important;
-  border-color: #e7e5e4 !important;
 }
 
 /* 为代码块添加角装饰 */
@@ -419,12 +450,7 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   position: absolute;
   width: 12px;
   height: 12px;
-  border: 2px solid #292524;
-}
-
-:global(.dark) :deep(.shiki::before),
-:global(.dark) :deep(.shiki::after) {
-  border-color: #e7e5e4;
+  border: 2px solid var(--line-shiki-border);
 }
 
 :deep(.shiki::before) {
@@ -446,57 +472,35 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   width: 100%;
   border-collapse: collapse;
   margin: 2rem 0;
-  border: 2px solid #292524;
-}
-
-:global(.dark) :deep(table) {
-  border-color: #e7e5e4;
+  border: 2px solid var(--line-table-border);
 }
 
 :deep(th),
 :deep(td) {
   padding: 0.75rem 1rem;
-  border: 1px solid #d6d3d1;
+  border: 1px solid var(--line-table-cell-border);
   text-align: left;
 }
 
-:global(.dark) :deep(th),
-:global(.dark) :deep(td) {
-  border-color: #44403c;
-}
-
 :deep(th) {
-  background: #292524;
-  color: #fafaf9;
+  background: var(--line-th-bg);
+  color: var(--line-th-color);
   font-weight: 500;
   text-transform: uppercase;
   font-size: 0.875rem;
   letter-spacing: 0.05em;
 }
 
-:global(.dark) :deep(th) {
-  background: #fafaf9;
-  color: #1c1917;
-}
-
 /* 引用 */
 :deep(blockquote) {
   margin: 2rem 0;
   padding: 1rem 1.5rem;
-  border-left: 3px solid #292524;
-  border-right: 1px solid #e7e5e4;
-  border-top: 1px solid #e7e5e4;
-  border-bottom: 1px solid #e7e5e4;
-  background: #fafaf9;
+  border-left: 3px solid var(--line-quote-border-strong);
+  border-right: 1px solid var(--line-quote-border-soft);
+  border-top: 1px solid var(--line-quote-border-soft);
+  border-bottom: 1px solid var(--line-quote-border-soft);
+  background: var(--line-quote-bg);
   position: relative;
-}
-
-:global(.dark) :deep(blockquote) {
-  border-left-color: #fafaf9;
-  border-right-color: #44403c;
-  border-top-color: #44403c;
-  border-bottom-color: #44403c;
-  background: #1c1917;
 }
 
 /* 响应式 */
