@@ -452,6 +452,11 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   position: relative;
   padding-left: 2rem;
   margin-bottom: 0.75rem;
+  list-style: none;
+}
+
+:deep(ul li::marker) {
+  content: '';
 }
 
 :deep(ul li::before) {
@@ -476,6 +481,11 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   padding-left: 3rem;
   margin-bottom: 1rem;
   counter-increment: line-counter;
+  list-style: none;
+}
+
+:deep(ol li::marker) {
+  content: '';
 }
 
 :deep(ol li::before) {

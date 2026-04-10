@@ -193,6 +193,10 @@ const difficultyConfig = computed(() => {
   margin-bottom: 0.75rem;
 }
 
+:deep(ul li::marker) {
+  content: '';
+}
+
 :deep(ul li::before) {
   content: "";
   position: absolute;
@@ -215,6 +219,11 @@ const difficultyConfig = computed(() => {
   padding-left: 2.5rem;
   margin-bottom: 1rem;
   counter-increment: item;
+  list-style: none;
+}
+
+:deep(ol li::marker) {
+  content: '';
 }
 
 :deep(ol li::before) {

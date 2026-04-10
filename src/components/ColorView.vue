@@ -321,6 +321,11 @@ const getColorScheme = (index: number) => {
   position: relative;
   padding-left: 2rem;
   margin-bottom: 0.75rem;
+  list-style: none;
+}
+
+:deep(ul li::marker) {
+  content: '';
 }
 
 :deep(ul li:nth-child(6n+1)::before) {
@@ -370,6 +375,11 @@ const getColorScheme = (index: number) => {
   padding-left: 3rem;
   margin-bottom: 1rem;
   counter-increment: color-counter;
+  list-style: none;
+}
+
+:deep(ol li::marker) {
+  content: '';
 }
 
 :deep(ol li::before) {

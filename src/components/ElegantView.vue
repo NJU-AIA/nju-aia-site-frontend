@@ -193,6 +193,10 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   margin-bottom: 0.75rem;
 }
 
+:deep(ul li::marker) {
+  content: '';
+}
+
 :deep(ul li::before) {
   content: '';
   position: absolute;
@@ -217,6 +221,11 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   padding-left: 2.5rem;
   margin-bottom: 1rem;
   counter-increment: soft-counter;
+  list-style: none;
+}
+
+:deep(ol li::marker) {
+  content: '';
 }
 
 :deep(ol li::before) {

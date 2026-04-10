@@ -160,6 +160,10 @@ const contentSlides = props.slides.filter(s => s.type === 'content');
   line-height: 1.75;
 }
 
+:deep(ul li::marker) {
+  content: '';
+}
+
 :deep(ul li::before) {
   content: "–";
   position: absolute;
