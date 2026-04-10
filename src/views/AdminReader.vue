@@ -299,7 +299,6 @@
           <div class="flex items-center gap-2">
             <span class="w-1 h-4 bg-gray-200 dark:bg-gray-700 rounded-full"></span>
             <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">实时预览</p>
-            <code class="text-[10px] font-mono text-gray-400 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded px-1.5 py-0.5">{{ form.defaultMode }}</code>
           </div>
 
           <div class="flex items-center gap-2">
@@ -315,9 +314,26 @@
         </div>
 
         <!-- Preview Body -->
-        <div class="flex-1 overflow-y-auto custom-scrollbar">
+        <transition name="fade-view">
+          <div
+            v-if="previewMode === 'slide' && parsedSlides.length > 0"
+            class="h-9 px-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2 shrink-0 overflow-x-auto custom-scrollbar"
+          >
+            <button
+              v-for="(_, idx) in parsedSlides"
+              :key="idx"
+              @click="jumpToSlide(idx)"
+              class="shrink-0 w-6 h-6 rounded flex items-center justify-center text-[10px] font-mono transition-colors"
+              :class="idx === currentSlideIndex
+                ? 'bg-[#40B3FF] text-white'
+                : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+            >{{ idx + 1 }}</button>
+          </div>
+        </transition>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar relative">
           <transition name="fade-view" mode="out-in">
-            <SlideView v-if="previewMode === 'slide' && parsedSlides.length > 0" :slide="parsedSlides[currentSlideIndex]" />
+            <SlideView v-if="previewMode === 'slide' && currentSlide" :slide="currentSlide" />
             <ActivityView v-else-if="previewMode === 'activity'" :slides="parsedSlides" :date="form.date" />
             <ColorView v-else-if="previewMode === 'color'" :slides="parsedSlides" :date="form.date" />
             <ElegantView v-else-if="previewMode === 'elegant'" :slides="parsedSlides" :date="form.date" />
@@ -328,13 +344,6 @@
           </transition>
         </div>
 
-        <!-- Slide Counter -->
-        <transition name="fade-view">
-          <div v-if="previewMode === 'slide' && parsedSlides.length > 0"
-            class="h-9 border-t border-gray-100 dark:border-gray-800 flex items-center justify-center shrink-0">
-            <span class="font-mono text-xs text-gray-400">{{ currentSlideIndex + 1 }} / {{ parsedSlides.length }}</span>
-          </div>
-        </transition>
       </div>
 
     </div>
@@ -738,6 +747,26 @@ const parsedSlides = computed<SlideNode[]>(() => {
   return form.value.content ? parseMarkdownToSlides(form.value.content) : [];
 });
 
+const totalSlides = computed(() => parsedSlides.value.length);
+const currentSlide = computed(() => parsedSlides.value[currentSlideIndex.value] || null);
+
+function clampSlideIndex(index: number): number {
+  if (totalSlides.value <= 0) return 0;
+  return Math.min(Math.max(index, 0), totalSlides.value - 1);
+}
+
+function jumpToSlide(index: number) {
+  currentSlideIndex.value = clampSlideIndex(index);
+}
+
+function goPrevSlide() {
+  currentSlideIndex.value = clampSlideIndex(currentSlideIndex.value - 1);
+}
+
+function goNextSlide() {
+  currentSlideIndex.value = clampSlideIndex(currentSlideIndex.value + 1);
+}
+
 async function fetchArticles() {
   isLoading.value = true;
   error.value = '';
@@ -904,18 +933,14 @@ const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
       if (!isTyping) {
         e.preventDefault();
-        if (currentSlideIndex.value < parsedSlides.value.length - 1) {
-          currentSlideIndex.value++;
-        }
+        goNextSlide();
       }
     }
 
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
       if (!isTyping) {
         e.preventDefault();
-        if (currentSlideIndex.value > 0) {
-          currentSlideIndex.value--;
-        }
+        goPrevSlide();
       }
     }
   }
@@ -930,6 +955,13 @@ watch(
   () => form.value.defaultMode,
   (mode) => {
     previewMode.value = normalizeViewMode(mode);
+  }
+);
+
+watch(
+  () => parsedSlides.value.length,
+  () => {
+    currentSlideIndex.value = clampSlideIndex(currentSlideIndex.value);
   }
 );
 

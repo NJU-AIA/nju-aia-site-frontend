@@ -299,7 +299,7 @@
             <button
               v-for="(_, idx) in slides"
               :key="idx"
-              @click="currentSlideIndex = idx"
+              @click="jumpToSlide(idx)"
               class="shrink-0 w-6 h-6 rounded flex items-center justify-center text-[10px] font-mono transition-colors"
               :class="idx === currentSlideIndex
                 ? 'bg-[#40B3FF] text-white'
@@ -309,11 +309,11 @@
         </transition>
 
         <!-- Content -->
-        <div class="flex-1 overflow-y-auto custom-scrollbar">
+        <div class="flex-1 overflow-y-auto custom-scrollbar relative">
           <transition name="fade-view" mode="out-in">
             <SlideView
-              v-if="currentViewMode === 'slide' && slides.length > 0"
-              :slide="slides[currentSlideIndex]"
+              v-if="currentViewMode === 'slide' && currentSlide"
+              :slide="currentSlide"
             />
             <ActivityView
               v-else-if="currentViewMode === 'activity'"
@@ -416,6 +416,9 @@ const currentMarkdown = computed({
 const slides = computed(() => readerStore.currentSlides);
 const documentModes = computed(() => readerStore.documentModes);
 const currentViewMode = computed(() => readerStore.currentViewMode);
+const totalSlides = computed(() => slides.value.length);
+const currentSlide = computed(() => slides.value[currentSlideIndex.value] || null);
+
 const availableViewModes = ['slide', 'activity', 'color', 'elegant', 'line', 'minimal', 'technical'] as const;
 
 provide('isDark', isDark);
@@ -441,6 +444,23 @@ const setCurrentViewMode = (mode: string) => {
   if (!readerStore.currentDocId) return;
   readerStore.setViewMode(readerStore.currentDocId, mode as ArticleMode);
   currentSlideIndex.value = 0;
+};
+
+const clampSlideIndex = (index: number) => {
+  if (totalSlides.value <= 0) return 0;
+  return Math.min(Math.max(index, 0), totalSlides.value - 1);
+};
+
+const jumpToSlide = (index: number) => {
+  currentSlideIndex.value = clampSlideIndex(index);
+};
+
+const goPrevSlide = () => {
+  currentSlideIndex.value = clampSlideIndex(currentSlideIndex.value - 1);
+};
+
+const goNextSlide = () => {
+  currentSlideIndex.value = clampSlideIndex(currentSlideIndex.value + 1);
 };
 
 const syncCurrentDocument = async () => {
@@ -515,14 +535,21 @@ const handleKeydown = (e: KeyboardEvent) => {
   if (currentViewMode.value === 'slide' && slides.value.length > 0) {
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
       e.preventDefault();
-      if (currentSlideIndex.value < slides.value.length - 1) currentSlideIndex.value++;
+      goNextSlide();
     }
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
       e.preventDefault();
-      if (currentSlideIndex.value > 0) currentSlideIndex.value--;
+      goPrevSlide();
     }
   }
 };
+
+watch(
+  () => slides.value.length,
+  () => {
+    currentSlideIndex.value = clampSlideIndex(currentSlideIndex.value);
+  }
+);
 
 onMounted(() => {
   initData();
