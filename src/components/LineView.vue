@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { SlideNode } from '../core/parser';
 import AstRenderer from './AstRenderer.vue';
 
@@ -16,7 +17,7 @@ const displayDate = props.date || new Date().toLocaleDateString('zh-CN', {
 });
 
 // 内容幻灯片
-const contentSlides = props.slides.filter(s => s.type === 'content');
+const contentSlides = computed(() => props.slides.filter((s) => s.type === 'content'));
 </script>
 
 <template>
