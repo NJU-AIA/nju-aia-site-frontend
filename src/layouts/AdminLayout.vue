@@ -1,12 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 transition-colors duration-300 dark:bg-gray-950">
     <header class="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/90">
-      <div
-        class="mx-auto flex h-14 items-center justify-between"
-        :class="isWorkspace
-          ? 'max-w-none px-4 xl:px-6 2xl:px-8'
-          : 'max-w-[1800px] px-4 sm:px-6 xl:px-8 2xl:px-10'"
-      >
+      <div class="flex h-14 w-full items-center justify-between px-4 sm:px-6 xl:px-8 2xl:px-10">
         <div class="flex items-center gap-8">
           <router-link to="/admin/articles" class="group flex items-center gap-2 outline-none">
             <img src="/logo.png" alt="AIA Logo" class="h-6 w-6 object-contain" />
@@ -66,7 +61,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>
           </button>
-          <div v-if="user" class="hidden text-right sm:block">
+          <div v-if="user" class="hidden w-36 shrink-0 text-right sm:block">
             <div class="text-xs font-medium text-gray-700 dark:text-gray-200">
               {{ user.displayName || user.username }}
             </div>
@@ -74,6 +69,7 @@
               {{ user.username }} · {{ user.role === 'owner' ? '所有者' : '管理员' }}
             </div>
           </div>
+          <div v-else class="hidden w-36 shrink-0 sm:block" aria-hidden="true"></div>
           <button
             class="rounded-lg border border-transparent px-3 py-1.5 text-sm font-medium text-gray-500 transition-all hover:border-red-100 hover:bg-red-50 hover:text-red-500 disabled:opacity-50 dark:text-gray-400 dark:hover:border-red-900/50 dark:hover:bg-red-950/30 dark:hover:text-red-400"
             :disabled="loggingOut"
