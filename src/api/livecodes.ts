@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { getToken } from '@/api/auth'
 
 export type LivecodeBlockType = 'markdown' | 'code'
 
@@ -52,17 +51,10 @@ const livecodeApiBaseUrl = import.meta.env.VITE_LIVECODE_API_BASE_URL || '/api'
 const http = axios.create({
   baseURL: livecodeApiBaseUrl,
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
-})
-
-http.interceptors.request.use((config) => {
-  const token = getToken()
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
 })
 
 http.interceptors.response.use(

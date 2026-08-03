@@ -1,88 +1,57 @@
-<!-- AdminLogin.vue -->
 <template>
-  <div class="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center transition-colors duration-300">
-    <div class="w-full max-w-sm px-8 py-10 border border-gray-100 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900">
-
+  <div class="flex min-h-screen items-center justify-center bg-white px-6 transition-colors duration-300 dark:bg-gray-950">
+    <div class="w-full max-w-sm rounded-2xl border border-gray-100 bg-white px-8 py-10 dark:border-gray-800 dark:bg-gray-900">
       <div class="mb-8 text-center">
-        <div class="flex justify-center mb-4">
-          <img src="/logo.png" alt="AIA Logo" class="w-10 h-10 object-contain" />
+        <div class="mb-4 flex justify-center">
+          <img src="/logo.png" alt="AIA Logo" class="h-10 w-10 object-contain" />
         </div>
         <h1 class="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">管理员登录</h1>
-        <p class="mt-1 text-sm text-gray-400 dark:text-gray-500">NJU AIA 后台管理系统</p>
+        <p class="mt-1 text-sm text-gray-400 dark:text-gray-500">使用 AIA 统一身份认证进入后台</p>
       </div>
 
-      <form @submit.prevent="handleLogin" class="space-y-4">
-        <div>
-          <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">密码</label>
-          <input
-            v-model="password"
-            type="password"
-            placeholder="请输入管理员密码"
-            class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF] dark:focus:border-[#40B3FF] transition-colors"
-          />
-        </div>
+      <div
+        v-if="errorMessage"
+        class="mb-4 rounded-lg border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-500 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400"
+      >
+        {{ errorMessage }}
+      </div>
 
-        <div v-if="errorMessage" class="px-3 py-2.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/50 text-sm text-red-500 dark:text-red-400">
-          {{ errorMessage }}
-        </div>
+      <button
+        type="button"
+        class="w-full rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+        @click="handleLogin"
+      >
+        使用 auth.nju-aia.com 登录
+      </button>
 
-        <div v-if="successMessage" class="px-3 py-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 text-sm text-emerald-600 dark:text-emerald-400">
-          {{ successMessage }}
-        </div>
-
-        <button
-          type="submit"
-          :disabled="loading"
-          class="w-full mt-2 bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-        >
-          {{ loading ? '登录中...' : '登录' }}
-        </button>
-      </form>
-
+      <p class="mt-4 text-center text-xs leading-5 text-gray-400 dark:text-gray-500">
+        仅后台授权列表中的账户可以访问。认证成功但未获授权的账户仍会被拒绝。
+      </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import axios from 'axios'
-import { authApi, setToken } from '@/api/auth'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { authApi } from '@/api/auth'
 
-const router = useRouter()
+const route = useRoute()
 
-const password = ref('')
-const loading = ref(false)
-const errorMessage = ref('')
-const successMessage = ref('')
+const errorMessages: Record<string, string> = {
+  not_authorized: '当前账户未获得后台权限，请联系后台所有者添加授权。',
+  invalid_flow: '登录流程已过期或校验失败，请重新登录。',
+  provider_rejected: '统一身份认证未完成。',
+  oidc_failed: '统一身份认证失败，请重新尝试。',
+  session_failed: '后台会话创建失败，请重新尝试。',
+}
 
-const handleLogin = async () => {
-  errorMessage.value = ''
-  successMessage.value = ''
+const errorMessage = computed(() => {
+  const code = typeof route.query.error === 'string' ? route.query.error : ''
+  return code ? errorMessages[code] || '登录失败，请重新尝试。' : ''
+})
 
-  if (!password.value.trim()) {
-    errorMessage.value = '请输入密码'
-    return
-  }
-
-  loading.value = true
-
-  try {
-    const res = await authApi.login({ password: password.value })
-    const token = res.data.token
-    setToken(token)
-    successMessage.value = '登录成功！'
-    setTimeout(() => {
-      router.push('/admin/articles')
-    }, 500)
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      errorMessage.value = (error as any).message || '登录失败'
-    } else {
-      errorMessage.value = '登录失败'
-    }
-  } finally {
-    loading.value = false
-  }
+const handleLogin = () => {
+  window.location.assign(authApi.loginURL)
 }
 </script>

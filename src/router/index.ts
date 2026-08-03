@@ -1,12 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import SiteLayout from '@/layouts/SiteLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
-import { getToken } from '@/api/auth'
+import { getCurrentUser } from '@/api/auth'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // 前台
     {
       path: '/',
       component: SiteLayout,
@@ -49,14 +48,10 @@ const router = createRouter({
         },
       ],
     },
-
-    // 后台登录页
     {
       path: '/admin/login',
       component: () => import('@/views/AdminLogin.vue'),
     },
-
-    // 后台管理页
     {
       path: '/admin',
       component: AdminLayout,
@@ -78,10 +73,13 @@ const router = createRouter({
           path: 'livecodes',
           component: () => import('@/views/AdminLivecodes.vue'),
         },
+        {
+          path: 'users',
+          component: () => import('@/views/AdminUsers.vue'),
+          meta: { requiresOwner: true },
+        },
       ],
     },
-
-    // 兜底
     {
       path: '/:pathMatch(.*)*',
       redirect: '/',
@@ -89,21 +87,29 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, _from, next) => {
-  const token = getToken()
+router.beforeEach(async (to) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const requiresOwner = to.matched.some((record) => record.meta.requiresOwner)
+  const isLoginPage = to.path === '/admin/login'
 
-  if (requiresAuth && !token) {
-    next('/admin/login')
-    return
+  if (!requiresAuth && !isLoginPage) {
+    return true
   }
 
-  if (to.path === '/admin/login' && token) {
-    next('/admin/articles')
-    return
+  const user = await getCurrentUser()
+  if (requiresAuth && !user) {
+    return {
+      path: '/admin/login',
+      query: { redirect: to.fullPath },
+    }
   }
-
-  next()
+  if (requiresOwner && user?.role !== 'owner') {
+    return '/admin/articles'
+  }
+  if (isLoginPage && user) {
+    return '/admin/articles'
+  }
+  return true
 })
 
 export default router

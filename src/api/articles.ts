@@ -1,5 +1,4 @@
 ﻿import axios from 'axios';
-import { getToken } from '@/api/auth';
 
 export type ArticleCategory = 'activity' | 'tutorial';
 export type ArticleMode =
@@ -53,6 +52,7 @@ interface ArticleQueryOptions {
 const baseConfig = {
   baseURL: '/api',
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -60,14 +60,6 @@ const baseConfig = {
 
 const publicHttp = axios.create(baseConfig);
 const authedHttp = axios.create(baseConfig);
-
-authedHttp.interceptors.request.use((config) => {
-  const token = getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 const handleResponseError = (error: any) => {
   const message =
