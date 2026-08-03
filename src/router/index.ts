@@ -64,6 +64,7 @@ const router = createRouter({
         {
           path: 'articles',
           component: () => import('@/views/AdminReader.vue'),
+          meta: { fullBleed: true },
         },
         {
           path: 'assets',

@@ -1,7 +1,10 @@
 <template>
   <div class="min-h-screen bg-gray-50 transition-colors duration-300 dark:bg-gray-950">
     <header class="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/90">
-      <div class="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
+      <div
+        class="mx-auto flex h-14 items-center justify-between px-4 xl:px-6"
+        :class="isFullBleed ? 'max-w-none' : 'max-w-7xl'"
+      >
         <div class="flex items-center gap-8">
           <router-link to="/admin/articles" class="group flex items-center gap-2 outline-none">
             <img src="/logo.png" alt="AIA Logo" class="h-6 w-6 object-contain" />
@@ -66,20 +69,22 @@
       </div>
     </header>
 
-    <main class="mx-auto max-w-7xl">
+    <main :class="isFullBleed ? 'w-full max-w-none' : 'mx-auto max-w-7xl'">
       <router-view />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { authApi, clearCurrentUser, getCachedUser, getCurrentUser, type CurrentUser } from '@/api/auth'
 
 const router = useRouter()
+const route = useRoute()
 const user = ref<CurrentUser | null>(getCachedUser() ?? null)
 const loggingOut = ref(false)
+const isFullBleed = computed(() => route.matched.some((record) => Boolean(record.meta.fullBleed)))
 
 onMounted(async () => {
   user.value = await getCurrentUser()
