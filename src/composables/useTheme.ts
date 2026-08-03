@@ -44,9 +44,13 @@ const bindWatchOnce = () => {
   })
 }
 
-export function useTheme() {
+export function initializeTheme() {
   ensureInitialized()
   bindWatchOnce()
+}
+
+export function useTheme() {
+  initializeTheme()
 
   const toggleTheme = () => {
     isDark.value = !isDark.value

@@ -2,8 +2,10 @@
   <div class="min-h-screen bg-gray-50 transition-colors duration-300 dark:bg-gray-950">
     <header class="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/90">
       <div
-        class="mx-auto flex h-14 items-center justify-between px-4 xl:px-6"
-        :class="isFullBleed ? 'max-w-none' : 'max-w-7xl'"
+        class="mx-auto flex h-14 items-center justify-between"
+        :class="isWorkspace
+          ? 'max-w-none px-4 xl:px-6 2xl:px-8'
+          : 'max-w-[1800px] px-4 sm:px-6 xl:px-8 2xl:px-10'"
       >
         <div class="flex items-center gap-8">
           <router-link to="/admin/articles" class="group flex items-center gap-2 outline-none">
@@ -50,6 +52,20 @@
         </div>
 
         <div class="flex items-center gap-3">
+          <button
+            type="button"
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+            :title="isDark ? '切换到浅色模式' : '切换到深色模式'"
+            :aria-label="isDark ? '切换到浅色模式' : '切换到深色模式'"
+            @click="toggleTheme"
+          >
+            <svg v-if="isDark" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364-.707-.707M6.343 6.343l-.707-.707m12.728 0-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </button>
           <div v-if="user" class="hidden text-right sm:block">
             <div class="text-xs font-medium text-gray-700 dark:text-gray-200">
               {{ user.displayName || user.username }}
@@ -69,7 +85,7 @@
       </div>
     </header>
 
-    <main :class="isFullBleed ? 'w-full max-w-none' : 'mx-auto max-w-7xl'">
+    <main :class="isWorkspace ? 'w-full max-w-none' : 'mx-auto w-full max-w-[1800px]'">
       <router-view />
     </main>
   </div>
@@ -79,12 +95,20 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { authApi, clearCurrentUser, getCachedUser, getCurrentUser, type CurrentUser } from '@/api/auth'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
 const user = ref<CurrentUser | null>(getCachedUser() ?? null)
 const loggingOut = ref(false)
-const isFullBleed = computed(() => route.matched.some((record) => Boolean(record.meta.fullBleed)))
+const { isDark, toggleTheme } = useTheme()
+const layoutMode = computed(() => {
+  const matched = [...route.matched]
+    .reverse()
+    .find((record) => typeof record.meta.adminLayout === 'string')
+  return matched?.meta.adminLayout === 'workspace' ? 'workspace' : 'wide'
+})
+const isWorkspace = computed(() => layoutMode.value === 'workspace')
 
 onMounted(async () => {
   user.value = await getCurrentUser()

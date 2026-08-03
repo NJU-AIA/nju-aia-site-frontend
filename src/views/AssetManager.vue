@@ -1,6 +1,6 @@
 <!-- AssetManager.vue -->
 <template>
-  <main class="max-w-6xl mx-auto px-6 pt-8 pb-20">
+  <main class="w-full px-4 pb-20 pt-8 sm:px-6 xl:px-8 2xl:px-10">
     <div class="mb-10">
       <p class="text-xs font-medium text-[#40B3FF] uppercase tracking-widest mb-3">Assets</p>
       <h1 class="text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
@@ -128,7 +128,7 @@
         暂无资源
       </div>
 
-      <div v-else class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div v-else class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         <div v-for="asset in normalizedAssets" :key="asset.path || asset.url || asset.filename"
           class="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-3 hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-200">
 

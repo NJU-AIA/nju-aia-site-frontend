@@ -64,20 +64,22 @@ const router = createRouter({
         {
           path: 'articles',
           component: () => import('@/views/AdminReader.vue'),
-          meta: { fullBleed: true },
+          meta: { adminLayout: 'workspace' },
         },
         {
           path: 'assets',
           component: () => import('@/views/AssetManager.vue'),
+          meta: { adminLayout: 'wide' },
         },
         {
           path: 'livecodes',
           component: () => import('@/views/AdminLivecodes.vue'),
+          meta: { adminLayout: 'workspace' },
         },
         {
           path: 'users',
           component: () => import('@/views/AdminUsers.vue'),
-          meta: { requiresOwner: true },
+          meta: { requiresOwner: true, adminLayout: 'wide' },
         },
       ],
     },

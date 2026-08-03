@@ -1,5 +1,5 @@
 <template>
-  <section class="px-6 py-8">
+  <section class="w-full px-4 py-8 sm:px-6 xl:px-8 2xl:px-10">
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h1 class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">授权用户</h1>
