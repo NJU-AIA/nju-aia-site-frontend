@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useArticleFromRoute } from '@/composables/useArticleFromRoute';
+import { articleCategoryPath } from '@/core/articleCategories';
 import { parseMarkdownToSlides } from '@/core/parser';
 import FixedSlideStage from '@/components/FixedSlideStage.vue';
 
@@ -17,7 +18,7 @@ provide('assetBaseUrl', assetBaseUrl);
 
 const slides = computed(() => parseMarkdownToSlides(article.value?.content || ''));
 const currentSlide = computed(() => slides.value[currentSlideIndex.value] || null);
-const returnPath = computed(() => article.value?.category === 'activity' ? '/activity-posts' : '/tech-tutorials');
+const returnPath = computed(() => articleCategoryPath(article.value?.category));
 
 function clampIndex(value: number) {
   if (slides.value.length === 0) return 0;

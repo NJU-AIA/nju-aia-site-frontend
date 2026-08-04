@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="relative flex h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-white transition-colors duration-300 dark:bg-gray-950">
 
     <!-- Sidebar -->
@@ -171,8 +171,9 @@
                 <label class="block text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-1">分类</label>
                 <select v-model="form.category"
                   class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF] transition-colors">
-                  <option value="activity">activity</option>
-                  <option value="tutorial">tutorial</option>
+                  <option value="preview">活动预热</option>
+                  <option value="activity">活动推文</option>
+                  <option value="tutorial">技术教程</option>
                 </select>
               </div>
               <div>
@@ -456,7 +457,7 @@
 
 import { ref, computed, onMounted, onUnmounted, provide, type ComputedRef, reactive, watch } from 'vue';
 import { useTheme } from '@/composables/useTheme';
-import { articlesApi, type Article, type ArticleMode, type CreateArticleRequest } from '@/api/articles';
+import { articlesApi, type Article, type ArticleCategory, type ArticleMode, type CreateArticleRequest } from '@/api/articles';
 import { assetsApi, type AssetRecord } from '@/api/assets';
 import { parseMarkdownDocument, parseMarkdownToSlides, type SlideNode } from '@/core/parser';
 
@@ -469,7 +470,6 @@ import LineView from '@/components/LineView.vue';
 import MinimalView from '@/components/MinimalView.vue';
 import TechnicalView from '@/components/TechnicalView.vue';
 
-type ArticleCategory = 'activity' | 'tutorial';
 
 interface ArticleListItem {
   id: string;
@@ -535,7 +535,7 @@ const form = ref<AdminFormState>({
   id: '',
   title: '',
   author: '',
-  category: 'activity',
+  category: 'preview',
   date: new Date().toISOString().slice(0, 10),
   published: false,
   content: '',
@@ -764,7 +764,7 @@ function applyArticleToForm(article: Article) {
     id: article.id,
     title: article.title || '',
     author: article.author || '',
-    category: (article.category as ArticleCategory) || 'activity',
+    category: (article.category as ArticleCategory) || 'preview',
     date: formatDate(article.date || article.createdAt || article.updatedAt) || getTodayDateString(),
     published: Boolean(article.published),
     content: article.content || '',
@@ -783,7 +783,7 @@ function resetForm() {
       id: '',
       title: '',
       author: '',
-      category: 'activity',
+      category: 'preview',
       date: getTodayDateString(),
       published: false,
       content: '',
@@ -813,7 +813,7 @@ function createNewArticle() {
     id: '',
     title: '',
     author: '',
-    category: 'activity',
+    category: 'preview',
     date: getTodayDateString(),
     published: false,
     content: '',
@@ -842,6 +842,7 @@ const filteredArticles = computed(() => {
 });
 
 const groupedArticles = computed(() => ({
+  活动预热: filteredArticles.value.filter((item) => item.category === 'preview'),
   活动推文: filteredArticles.value.filter((item) => item.category === 'activity'),
   技术教程: filteredArticles.value.filter((item) => item.category === 'tutorial'),
 }));
@@ -1002,7 +1003,7 @@ async function deleteCurrentArticle() {
       id: '',
       title: '',
       author: '',
-      category: 'activity',
+      category: 'preview',
       date: getTodayDateString(),
       published: false,
       content: '',

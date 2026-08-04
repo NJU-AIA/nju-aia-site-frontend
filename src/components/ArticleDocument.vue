@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import type { MarkdownNode } from '@/core/parser';
 import { resolveArticleAssetUrl } from '@/core/assets';
+import { articleCategoryLabel } from '@/core/articleCategories';
 import AstRenderer from './AstRenderer.vue';
 
 const props = withDefaults(
@@ -40,7 +41,7 @@ const renderedNodes = computed(() => {
 });
 
 const coverUrl = computed(() => resolveArticleAssetUrl(props.cover, props.id));
-const categoryLabel = computed(() => props.category === 'activity' ? '活动记录' : '技术文章');
+const categoryLabel = computed(() => articleCategoryLabel(props.category));
 </script>
 
 <template>

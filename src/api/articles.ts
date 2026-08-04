@@ -1,6 +1,6 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 
-export type ArticleCategory = 'activity' | 'tutorial';
+export type ArticleCategory = 'preview' | 'activity' | 'tutorial';
 export type ArticleMode =
   | 'slide'
   | 'activity'
@@ -16,7 +16,7 @@ export interface Article {
   id: string;
   title: string;
   author: string;
-  category: string;
+  category: ArticleCategory;
   date?: string;
   published?: boolean;
   content: string;
@@ -33,7 +33,7 @@ export interface ArticleListResponse {
 export interface CreateArticleRequest {
   title: string;
   author: string;
-  category: string;
+  category: ArticleCategory;
   date: string;
   published?: boolean;
   content: string;

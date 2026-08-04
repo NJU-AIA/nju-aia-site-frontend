@@ -2,6 +2,7 @@
 import { computed, provide } from 'vue';
 import { useTheme } from '@/composables/useTheme';
 import { useArticleFromRoute } from '@/composables/useArticleFromRoute';
+import { articleCategoryPath } from '@/core/articleCategories';
 import { parseMarkdownDocument } from '@/core/parser';
 import ArticleDocument from '@/components/ArticleDocument.vue';
 
@@ -14,7 +15,7 @@ provide('currentArticleId', articleId);
 provide('assetBaseUrl', assetBaseUrl);
 
 const nodes = computed(() => parseMarkdownDocument(article.value?.content || ''));
-const returnPath = computed(() => article.value?.category === 'activity' ? '/activity-posts' : '/tech-tutorials');
+const returnPath = computed(() => articleCategoryPath(article.value?.category));
 </script>
 
 <template>

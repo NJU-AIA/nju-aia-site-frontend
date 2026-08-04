@@ -15,6 +15,10 @@ const router = createRouter({
           component: () => import('@/views/Home.vue'),
         },
         {
+          path: 'activity-previews',
+          component: () => import('@/views/ActivityPreviews.vue'),
+        },
+        {
           path: 'activity-posts',
           component: () => import('@/views/ActivityPosts.vue'),
         },
