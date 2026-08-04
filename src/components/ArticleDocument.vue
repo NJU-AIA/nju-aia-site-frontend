@@ -210,13 +210,15 @@ const categoryLabel = computed(() => props.category === 'activity' ? '活动记�
   font-size: 0.92rem;
 }
 
-:global(.dark) .article-document { color: #ddd3db; }
-:global(.dark) .article-header h1 { color: #f7eff5; }
-:global(.dark) .article-author { color: #b9abb6; }
-:global(.dark) .article-author__avatar { background: #33232f; color: #f0cde9; }
-:global(.dark) .article-body { color: #d9d0d8; }
-:global(.dark) .article-body :deep(.ast-heading-2) { border-color: #513549; }
-:global(.dark) .article-cover { border-color: #42323f; background: #181217; }
+:global(.dark .article-document) { color: #ebe4ea; }
+:global(.dark .article-kicker) { color: #efa6df; }
+:global(.dark .article-header h1) { color: #fff8fd; }
+:global(.dark .article-author) { color: #cec2cc; }
+:global(.dark .article-author__avatar) { background: #3a2736; color: #f5b8e7; }
+:global(.dark .article-body) { color: #e7e0e6; }
+:global(.dark .article-body .ast-heading-2) { border-color: #604157; }
+:global(.dark .article-body .ast-heading-2::after) { background: #d77bc4; }
+:global(.dark .article-cover) { border-color: #4a3746; background: #181217; }
 
 @media (max-width: 640px) {
   .article-document--full,

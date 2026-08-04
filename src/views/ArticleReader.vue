@@ -32,7 +32,7 @@ const returnPath = computed(() => article.value?.category === 'activity' ? '/act
         <router-link
           v-if="article?.defaultMode === 'slide'"
           :to="{ path: '/slides', query: { id: article.id } }"
-          class="rounded-lg border border-[#d8c1d4] px-3 py-1.5 text-xs font-semibold text-[#6f145f] transition hover:bg-[#f8f3f7]"
+          class="rounded-lg border border-[#d8c1d4] px-3 py-1.5 text-xs font-semibold text-[#6f145f] transition hover:bg-[#f8f3f7] dark:border-[#604157] dark:text-[#f0a7df] dark:hover:bg-[#281d26]"
         >
           演示模式
         </router-link>
