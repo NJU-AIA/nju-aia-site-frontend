@@ -47,6 +47,18 @@
         </div>
 
         <div class="flex items-center gap-3">
+          <router-link
+            to="/"
+            class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 text-sm font-medium text-gray-500 transition-colors hover:border-[#6f145f]/30 hover:bg-[#f8f3f7] hover:text-[#6f145f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6f145f]/30 dark:border-gray-700 dark:text-gray-400 dark:hover:border-[#d77bc4]/40 dark:hover:bg-[#281d26] dark:hover:text-[#f0a7df]"
+            aria-label="返回前台首页"
+            title="返回前台首页"
+          >
+            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m3 11.25 9-7.5 9 7.5" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 9.75V20.25h13.5V9.75M9 20.25v-6h6v6" />
+            </svg>
+            <span class="hidden lg:inline">返回前台</span>
+          </router-link>
           <button
             type="button"
             class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-200"
