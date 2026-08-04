@@ -7,6 +7,7 @@ export interface ActivityPostItem {
   date: string;
   cover?: string;
   author: string;
+  defaultMode: string;
 }
 
 function formatDate(dateString?: string): string {
@@ -27,6 +28,7 @@ function mapArticle(article: Article): ActivityPostItem {
     date: formatDate(article.date || article.createdAt || article.updatedAt),
     cover: article.cover,
     author: article.author,
+    defaultMode: article.defaultMode,
   };
 }
 

@@ -61,7 +61,7 @@
       </div>
 
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <router-link v-for="post in recentEvents" :key="post.id" :to="`/reader?id=${post.id}`"
+        <router-link v-for="post in recentEvents" :key="post.id" :to="routeForArticle(post.id, post.defaultMode)"
           class="group block outline-none">
           <div
             class="h-full flex flex-col p-6 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200">
@@ -105,6 +105,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useActivityPostsStore } from '@/stores/activityPosts'
+import { routeForArticle } from '@/core/articleRoutes'
 
 const ASSET_BASE_URL = import.meta.env.VITE_ASSET_BASE_URL || '/assets';
 const activityPostsStore = useActivityPostsStore()

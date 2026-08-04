@@ -179,6 +179,7 @@
                 <label class="block text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-1">展示模式</label>
                 <select v-model="form.defaultMode"
                   class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF] transition-colors">
+                  <option value="article">article</option>
                   <option value="slide">slide</option>
                   <option value="activity">activity</option>
                   <option value="color">color</option>
@@ -362,7 +363,17 @@
 
         <div class="flex-1 overflow-y-auto custom-scrollbar relative">
           <transition name="fade-view" mode="out-in">
-            <SlideView v-if="previewMode === 'slide' && currentSlide" :slide="currentSlide" />
+            <ArticleDocument
+              v-if="previewMode === 'article'"
+              :id="form.id || 'preview'"
+              :title="form.title || '未命名文章'"
+              :author="form.author"
+              :date="form.date"
+              :category="form.category"
+              :cover="form.cover"
+              :nodes="articleNodes"
+            />
+            <FixedSlideStage v-else-if="previewMode === 'slide' && currentSlide" :slide="currentSlide" />
             <ActivityView v-else-if="previewMode === 'activity'" :slides="parsedSlides" :date="form.date" />
             <ColorView v-else-if="previewMode === 'color'" :slides="parsedSlides" :date="form.date" />
             <ElegantView v-else-if="previewMode === 'elegant'" :slides="parsedSlides" :date="form.date" />
@@ -447,9 +458,10 @@ import { ref, computed, onMounted, onUnmounted, provide, type ComputedRef, react
 import { useTheme } from '@/composables/useTheme';
 import { articlesApi, type Article, type ArticleMode, type CreateArticleRequest } from '@/api/articles';
 import { assetsApi, type AssetRecord } from '@/api/assets';
-import { parseMarkdownToSlides, type SlideNode } from '@/core/parser';
+import { parseMarkdownDocument, parseMarkdownToSlides, type SlideNode } from '@/core/parser';
 
-import SlideView from '@/components/SlideView.vue';
+import ArticleDocument from '@/components/ArticleDocument.vue';
+import FixedSlideStage from '@/components/FixedSlideStage.vue';
 import ActivityView from '@/components/ActivityView.vue';
 import ColorView from '@/components/ColorView.vue';
 import ElegantView from '@/components/ElegantView.vue';
@@ -482,14 +494,13 @@ interface AdminFormState {
   defaultMode: ArticleMode;
 }
 
-const availableViewModes = ['slide', 'activity', 'color', 'elegant', 'line', 'minimal', 'technical'] as const;
+const availableViewModes = ['article', 'slide', 'activity', 'color', 'elegant', 'line', 'minimal', 'technical'] as const;
 
 function normalizeViewMode(mode?: ArticleMode | string): ArticleMode {
-  if (!mode) return 'minimal';
+  if (!mode) return 'article';
   if (availableViewModes.includes(mode as (typeof availableViewModes)[number])) return mode as ArticleMode;
-  if (mode === 'article') return 'minimal';
   if (mode === 'homework') return 'line';
-  return 'minimal';
+  return 'article';
 }
 
 const { isDark, toggleTheme } = useTheme();
@@ -518,7 +529,7 @@ const selectedId = ref('');
 const isCreating = ref(false);
 
 const articles = ref<ArticleListItem[]>([]);
-const previewMode = ref<ArticleMode>('minimal');
+const previewMode = ref<ArticleMode>('article');
 
 const form = ref<AdminFormState>({
   id: '',
@@ -529,7 +540,7 @@ const form = ref<AdminFormState>({
   published: false,
   content: '',
   cover: '',
-  defaultMode: 'minimal',
+  defaultMode: 'article',
 });
 
 const ASSET_BASE_URL = import.meta.env.VITE_ASSET_BASE_URL || '/assets';
@@ -777,9 +788,9 @@ function resetForm() {
       published: false,
       content: '',
       cover: '',
-      defaultMode: 'minimal',
+      defaultMode: 'article',
     };
-    previewMode.value = 'minimal';
+    previewMode.value = 'article';
     currentSlideIndex.value = 0;
     articleAssets.value = [];
     clearAssetMessage();
@@ -807,10 +818,10 @@ function createNewArticle() {
     published: false,
     content: '',
     cover: '',
-    defaultMode: 'minimal',
+    defaultMode: 'article',
   };
 
-  previewMode.value = 'minimal';
+  previewMode.value = 'article';
   articleAssets.value = [];
   assetSelectedFile.value = null;
   assetName.value = '';
@@ -834,6 +845,10 @@ const groupedArticles = computed(() => ({
   活动推文: filteredArticles.value.filter((item) => item.category === 'activity'),
   技术教程: filteredArticles.value.filter((item) => item.category === 'tutorial'),
 }));
+
+const articleNodes = computed(() => {
+  return form.value.content ? parseMarkdownDocument(form.value.content) : [];
+});
 
 const parsedSlides = computed<SlideNode[]>(() => {
   return form.value.content ? parseMarkdownToSlides(form.value.content) : [];
@@ -992,10 +1007,10 @@ async function deleteCurrentArticle() {
       published: false,
       content: '',
       cover: '',
-      defaultMode: 'minimal',
+      defaultMode: 'article',
     };
 
-    previewMode.value = 'minimal';
+    previewMode.value = 'article';
     currentSlideIndex.value = 0;
 
     await fetchArticles();

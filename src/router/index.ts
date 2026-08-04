@@ -27,6 +27,14 @@ const router = createRouter({
           component: () => import('@/views/Reader.vue'),
         },
         {
+          path: 'article',
+          component: () => import('@/views/ArticleReader.vue'),
+        },
+        {
+          path: 'slides',
+          component: () => import('@/views/SlidesReader.vue'),
+        },
+        {
           path: 'about',
           component: () => import('@/views/About.vue'),
         },
