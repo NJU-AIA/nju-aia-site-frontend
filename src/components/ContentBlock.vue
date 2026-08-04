@@ -299,4 +299,74 @@ onBeforeUnmount(() => {
 .content-block__body :deep(.ast-divider) {
   margin: 0.8rem 0 !important;
 }
+
+/*
+ * Slides always use a white canvas. The site's global dark-mode selectors
+ * must not turn slide text into light gray merely because the viewer's
+ * system theme is dark.
+ */
+.content-block__body :deep(.ast-paragraph),
+.content-block__body :deep(.ast-list),
+.content-block__body :deep(.ast-list-item),
+.content-block__body :deep(.ast-emphasis) {
+  color: #302a2f !important;
+}
+
+.content-block__body :deep(.ast-heading),
+.content-block__body :deep(.ast-strong) {
+  color: #171217 !important;
+}
+
+.content-block__body :deep(.ast-delete),
+.content-block__body :deep(.ast-invalid-link) {
+  color: #6d656b !important;
+}
+
+.content-block__body :deep(.ast-link),
+.content-block__body :deep(.ast-inline-math),
+.content-block__body :deep(.ast-code-lang),
+.content-block__body :deep(.ast-pseudo-keyword) {
+  color: #6f145f !important;
+}
+
+.content-block__body :deep(.ast-inline-code),
+.content-block__body :deep(.ast-math),
+.content-block__body :deep(.ast-blockquote) {
+  border-color: #e3d2e0 !important;
+  background: #faf6f9 !important;
+  color: #302a2f !important;
+}
+
+.content-block__body :deep(.ast-divider),
+.content-block__body :deep(.ast-table-wrapper),
+.content-block__body :deep(.ast-table-row) {
+  border-color: #eaddea !important;
+}
+
+.content-block__body :deep(.ast-list-item)::marker {
+  color: #6f145f !important;
+}
+
+.content-block__body :deep(.ast-code-frame),
+.content-block__body :deep(.ast-pseudo),
+.content-block__body :deep(.ast-mermaid) {
+  border-color: #d8c1d4 !important;
+  background: #fff !important;
+}
+
+.content-block__body :deep(.ast-code-meta) {
+  border-color: #eaddea !important;
+  background: #f8f3f7 !important;
+}
+
+.content-block__body :deep(.ast-pseudo-title) {
+  color: #766c75 !important;
+}
+
+.content-block__body :deep(.ast-code-content),
+.content-block__body :deep(.ast-code-fallback),
+.content-block__body :deep(.ast-pseudo-lines) {
+  background: #faf8fa !important;
+  color: #24292f !important;
+}
 </style>
