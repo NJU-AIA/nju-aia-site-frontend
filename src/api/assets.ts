@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getToken } from '@/api/auth';
 
 export type AssetKind = 'article' | 'shared';
 
@@ -44,15 +43,7 @@ export interface UploadAssetRequest {
 const http = axios.create({
   baseURL: '/api',
   timeout: 20000,
-});
-
-/** 请求拦截器：自动带 token */
-http.interceptors.request.use((config) => {
-  const token = getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  withCredentials: true,
 });
 
 /** 响应拦截器 */

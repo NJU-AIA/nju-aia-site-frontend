@@ -5,6 +5,9 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import './style.css' // 或者是 './index.css' (Tailwind 的入口)
 import App from './App.vue'
 import router from './router' // 引入我们在前面步骤创建的路由实例
+import { initializeTheme } from './composables/useTheme'
+
+initializeTheme()
 
 const app = createApp(App)
 const pinia = createPinia()

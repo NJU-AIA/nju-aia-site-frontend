@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="h-[calc(100vh-3.5rem)] overflow-hidden bg-gray-50 dark:bg-gray-950">
     <div class="flex h-full">
-      <aside class="flex w-[300px] flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <aside class="flex w-[280px] shrink-0 flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 xl:w-[320px] 2xl:w-[340px]">
         <div class="border-b border-gray-200 p-3 dark:border-gray-800">
           <div class="mb-2 flex items-center justify-between">
             <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">代码文件</h2>

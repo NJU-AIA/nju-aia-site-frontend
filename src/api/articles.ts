@@ -1,7 +1,6 @@
-﻿import axios from 'axios';
-import { getToken } from '@/api/auth';
+import axios from 'axios';
 
-export type ArticleCategory = 'activity' | 'tutorial';
+export type ArticleCategory = 'preview' | 'activity' | 'tutorial';
 export type ArticleMode =
   | 'slide'
   | 'activity'
@@ -17,7 +16,7 @@ export interface Article {
   id: string;
   title: string;
   author: string;
-  category: string;
+  category: ArticleCategory;
   date?: string;
   published?: boolean;
   content: string;
@@ -34,7 +33,7 @@ export interface ArticleListResponse {
 export interface CreateArticleRequest {
   title: string;
   author: string;
-  category: string;
+  category: ArticleCategory;
   date: string;
   published?: boolean;
   content: string;
@@ -53,6 +52,7 @@ interface ArticleQueryOptions {
 const baseConfig = {
   baseURL: '/api',
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -60,14 +60,6 @@ const baseConfig = {
 
 const publicHttp = axios.create(baseConfig);
 const authedHttp = axios.create(baseConfig);
-
-authedHttp.interceptors.request.use((config) => {
-  const token = getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 const handleResponseError = (error: any) => {
   const message =

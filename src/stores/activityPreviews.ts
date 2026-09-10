@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { articlesApi, type Article } from '@/api/articles';
 
-export interface ActivityPostItem {
+export interface ActivityPreviewItem {
   id: string;
   title: string;
   date: string;
@@ -21,7 +21,7 @@ function formatDate(dateString?: string): string {
   ).padStart(2, '0')}`;
 }
 
-function mapArticle(article: Article): ActivityPostItem {
+function mapArticle(article: Article): ActivityPreviewItem {
   return {
     id: article.id,
     title: article.title,
@@ -44,9 +44,9 @@ function compareArticleByLatest(a: Article, b: Article): number {
   return tb - ta;
 }
 
-export const useActivityPostsStore = defineStore('activityPosts', {
+export const useActivityPreviewsStore = defineStore('activityPreviews', {
   state: () => ({
-    posts: [] as ActivityPostItem[],
+    posts: [] as ActivityPreviewItem[],
     isLoading: false,
     loaded: false,
     error: null as string | null,
@@ -73,14 +73,14 @@ export const useActivityPostsStore = defineStore('activityPosts', {
         const { data } = await articlesApi.getArticles();
 
         this.posts = (data.items || [])
-          .filter((item) => item.category === 'activity')
+          .filter((item) => item.category === 'preview')
           .sort(compareArticleByLatest)
           .map(mapArticle);
 
         this.loaded = true;
         this.lastFetchedAt = Date.now();
       } catch (error) {
-        console.error('加载活动推文失败', error);
+        console.error('加载活动预热失败', error);
         this.error = error instanceof Error ? error.message : '加载失败';
       } finally {
         this.isLoading = false;
@@ -89,7 +89,7 @@ export const useActivityPostsStore = defineStore('activityPosts', {
   },
 
   persist: {
-    key: 'activity-posts-store',
+    key: 'activity-previews-store',
     storage: localStorage,
     pick: ['posts', 'loaded', 'lastFetchedAt'],
   },

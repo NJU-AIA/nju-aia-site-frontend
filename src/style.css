@@ -4,3 +4,7 @@
 /* Tailwind v4 dark variant: support html/body class and data-theme fallback */
 @custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
+html {
+  scrollbar-gutter: stable;
+}
+

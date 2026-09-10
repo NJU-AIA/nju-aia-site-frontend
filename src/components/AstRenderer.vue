@@ -1,549 +1,585 @@
-<!-- AstRenderer.vue -->
-
 <script setup lang="ts">
-import { ref, watch, onMounted, inject, type Ref } from 'vue';
+import { inject, onBeforeUnmount, ref, watch, type Ref } from 'vue';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import { codeToHtml } from 'shiki';
 import mermaid from 'mermaid';
+import { codeToHtml } from 'shiki';
+import type { MarkdownNode } from '@/core/parser';
 
-const props = defineProps<{ node: any; }>();
-const highlightedCode = ref<string>('');
-const pseudoTitle = ref<string>('');
-const pseudoLines = ref<string[]>([]);
+const props = defineProps<{ node: MarkdownNode }>();
 
-const isDark = inject('isDark', ref(true));
-const currentArticleId = inject<Ref<string>>('currentArticleId', ref(''));
+const isDark = inject<Readonly<Ref<boolean>>>('isDark', ref(false));
+const currentArticleId = inject<Readonly<Ref<string>>>('currentArticleId', ref(''));
 const assetBaseUrl = inject<string>('assetBaseUrl', '');
 
-const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+const renderedMarkup = ref('');
+const renderError = ref('');
+const fallbackCode = ref('');
+const pseudoTitle = ref('');
+const pseudoLines = ref<string[]>([]);
+const isRendering = ref(props.node.type === 'code');
+let generation = 0;
 
-// 伪代码关键字高亮与缩进格式化
-const formatPseudoLine = (line: string) => {
-  const indentMatched = line.match(/^(\s+)/);
-  const indent = indentMatched ? '&nbsp;'.repeat(indentMatched[1].length * 2) : '';
-  const content = escapeHtml(line.trimStart());
+const PSEUDO_KEYWORDS = new Set([
+  'if', 'else', 'while', 'for', 'return', 'function', 'procedure',
+  'end', 'do', 'then', 'break', 'continue', 'true', 'false',
+  'repeat', 'until', 'input', 'output',
+]);
+const PSEUDO_PATTERN = new RegExp(`\\b(${[...PSEUDO_KEYWORDS].join('|')})\\b`, 'gi');
+const SAFE_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:']);
+const SAFE_DATA_IMAGE = /^data:image\/(?:png|jpeg|gif|webp);base64,[a-z0-9+/=\s]+$/i;
 
-  const keywords = ['if', 'else', 'while', 'for', 'return', 'function', 'procedure', 'end', 'do', 'then', 'break', 'continue', 'true', 'false'];
-  const regex = new RegExp(`\\b(${keywords.join('|')})\\b`, 'gi');
-  return `${indent}${content.replace(regex, '<strong class="ast-pseudo-keyword">$1</strong>')}`;
-};
+function renderMath(value: unknown, displayMode = false) {
+  return katex.renderToString(String(value ?? ''), {
+    displayMode,
+    throwOnError: false,
+    strict: 'warn',
+    trust: false,
+  });
+}
 
-const renderBlock = async () => {
-  if (props.node.type === 'code') {
-    const lang = props.node.lang || 'text';
+function pseudoTokens(line: string) {
+  return line.split(PSEUDO_PATTERN).map((text, index) => ({
+    text,
+    keyword: index % 2 === 1 && PSEUDO_KEYWORDS.has(text.toLowerCase()),
+  }));
+}
 
-    if (lang === 'mermaid') {
-      try {
-        mermaid.initialize({ startOnLoad: false, theme: isDark.value ? 'dark' : 'default', fontFamily: 'inherit' });
-        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-        const { svg } = await mermaid.render(id, props.node.value);
-        highlightedCode.value = svg;
-      } catch (error) {
-        highlightedCode.value = `<div class="text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 px-4 py-2 rounded-lg text-sm border border-amber-200 dark:border-amber-800">Mermaid 语法错误: ${error}</div>`;
-      }
+async function renderCode() {
+  const currentGeneration = ++generation;
+  renderedMarkup.value = '';
+  renderError.value = '';
+  fallbackCode.value = '';
+  pseudoTitle.value = '';
+  pseudoLines.value = [];
+
+  if (props.node.type !== 'code') {
+    isRendering.value = false;
+    return;
+  }
+
+  isRendering.value = true;
+  const language = String(props.node.lang || 'text').toLowerCase();
+  const value = String(props.node.value || '');
+
+  try {
+    if (language === 'mermaid') {
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: isDark.value ? 'dark' : 'default',
+        fontFamily: 'inherit',
+        flowchart: { htmlLabels: false },
+        themeVariables: {
+          primaryColor: isDark.value ? '#241622' : '#f8f3f7',
+          primaryTextColor: isDark.value ? '#f5edf4' : '#222222',
+          primaryBorderColor: '#6f145f',
+          lineColor: '#6f145f',
+          secondaryColor: isDark.value ? '#171217' : '#ffffff',
+          tertiaryColor: isDark.value ? '#2a1c28' : '#f8f3f7',
+        },
+      });
+      const id = `mermaid-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
+      const { svg } = await mermaid.render(id, value);
+      if (currentGeneration === generation) renderedMarkup.value = svg;
       return;
     }
 
-    if (lang === 'pseudo' || lang === 'algorithm') {
-      const lines = props.node.value.split('\n');
-      pseudoTitle.value = lines[0].startsWith('//') ? lines[0].replace(/^\/\/\s*/, '') : 'Algorithm';
-      pseudoLines.value = lines[0].startsWith('//') ? lines.slice(1) : lines;
+    if (language === 'pseudo' || language === 'algorithm') {
+      const lines = value.split('\n');
+      const hasTitle = lines[0]?.startsWith('//') ?? false;
+      pseudoTitle.value = hasTitle ? lines[0].replace(/^\/\/\s*/, '') : 'Algorithm';
+      pseudoLines.value = hasTitle ? lines.slice(1) : lines;
       return;
     }
 
     try {
-      highlightedCode.value = await codeToHtml(props.node.value, {
-        lang,
-        theme: isDark.value ? 'tokyo-night' : 'github-light'
+      const html = await codeToHtml(value, {
+        lang: language,
+        theme: isDark.value ? 'tokyo-night' : 'github-light',
       });
-    } catch (error) {
-      highlightedCode.value = `<pre class="shiki-fallback text-sm font-mono p-3 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-800 dark:text-slate-200">${props.node.value}</pre>`;
+      if (currentGeneration === generation) renderedMarkup.value = html;
+    } catch {
+      fallbackCode.value = value;
+    }
+  } catch (error) {
+    if (currentGeneration === generation) {
+      renderError.value = error instanceof Error ? error.message : '渲染失败';
+      fallbackCode.value = value;
+    }
+  } finally {
+    if (currentGeneration === generation) isRendering.value = false;
+  }
+}
+
+watch(
+  () => [props.node.type, props.node.lang, props.node.value, isDark.value],
+  renderCode,
+  { immediate: true },
+);
+
+onBeforeUnmount(() => {
+  generation++;
+});
+
+function isVideo(url: unknown) {
+  return /\.(?:mp4|webm|ogg)(?:[?#]|$)/i.test(String(url ?? ''));
+}
+
+function mediaChildren(node: MarkdownNode) {
+  return node.children?.filter((child) => child.type === 'image') ?? [];
+}
+
+function isPureMedia(node: MarkdownNode) {
+  if (node.type !== 'paragraph') return false;
+  const children = node.children?.filter(
+    (child) => child.type !== 'text' || String(child.value ?? '').trim(),
+  ) ?? [];
+  return children.length > 0 && children.every((child) => child.type === 'image');
+}
+
+function gridColumns(count: number) {
+  if (count === 2 || count === 4) return 2;
+  return count >= 3 ? 3 : 1;
+}
+
+function safeLinkHref(rawUrl: unknown) {
+  const value = String(rawUrl ?? '').trim();
+  if (!value || /[\u0000-\u001f\u007f]/.test(value)) return '';
+  if (value.startsWith('/') || value.startsWith('./') || value.startsWith('../') || value.startsWith('#')) {
+    return value;
+  }
+
+  try {
+    const parsed = new URL(value, window.location.href);
+    return SAFE_LINK_PROTOCOLS.has(parsed.protocol) ? value : '';
+  } catch {
+    return '';
+  }
+}
+
+function resolveMediaUrl(rawUrl: unknown) {
+  const value = String(rawUrl ?? '').trim();
+  if (!value || /[\u0000-\u001f\u007f]/.test(value)) return '';
+  if (SAFE_DATA_IMAGE.test(value)) return value;
+
+  if (/^https?:\/\//i.test(value) || value.startsWith('//')) {
+    try {
+      return new URL(value, window.location.href).href;
+    } catch {
+      return '';
     }
   }
-};
-
-onMounted(renderBlock);
-watch(isDark, renderBlock);
-
-const isVideo = (url: string) => /\.(mp4|webm|ogg)$/i.test(url);
-const isPureMedia = (node: any) => {
-  if (node.type !== 'paragraph') return false;
-  const validChildren = node.children.filter((c: any) => c.type !== 'text' || c.value.trim() !== '');
-  return validChildren.length > 0 && validChildren.every((c: any) => c.type === 'image');
-};
-const getMediaChildren = (node: any) => node.children.filter((c: any) => c.type === 'image');
-const getGridCols = (count: number) => {
-  if (count === 2 || count === 4) return 2;
-  if (count >= 3) return 3;
-  return 1;
-};
-
-const resolveUrl = (url: string) => {
-  if (!url) return '';
-
-  // 1. 外链直接返回
-  if (
-    url.startsWith('http://') ||
-    url.startsWith('https://') ||
-    url.startsWith('data:')
-  ) {
-    return url;
-  }
+  if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return '';
 
   const base = assetBaseUrl.replace(/\/$/, '');
-  const articleId = (currentArticleId?.value || '').trim();
+  const relative = value.replace(/^\.\//, '').replace(/^\//, '');
+  const articleId = currentArticleId.value.trim();
 
-  // 2. / 开头：直接拼前缀
-  if (url.startsWith('/')) {
-    return base ? `${base}${url}` : url;
-  }
+  if (value.startsWith('/')) return base ? `${base}/${relative}` : `/${relative}`;
+  if (articleId) return base ? `${base}/${articleId}/${relative}` : `/${articleId}/${relative}`;
+  return base ? `${base}/${relative}` : `/${relative}`;
+}
 
-  // 3. 不以 / 开头：视为文件名，拼 前缀 + 文章id + 文件名
-  const filename = url.replace(/^\.\//, '');
-
-  if (articleId) {
-    return base ? `${base}/${articleId}/${filename}` : `/${articleId}/${filename}`;
-  }
-
-  // 兜底：没有 articleId 时至少拼前缀
-  return base ? `${base}/${filename}` : `/${filename}`;
-};
+function headingTag(depth: unknown) {
+  return `h${Math.min(6, Math.max(1, Number(depth) || 3))}`;
+}
 </script>
 
 <template>
   <template v-if="node.type === 'text'">{{ node.value }}</template>
+  <br v-else-if="node.type === 'break'" />
+  <hr v-else-if="node.type === 'thematicBreak'" class="ast-divider" />
 
-  <span v-else-if="node.type === 'inlineMath'" class="ast-inline-math"
-    v-html="katex.renderToString(node.value, { throwOnError: false })"></span>
+  <span
+    v-else-if="node.type === 'inlineMath'"
+    class="ast-inline-math"
+    v-html="renderMath(node.value)"
+  />
 
-  <div v-else-if="node.type === 'math'"
+  <div
+    v-else-if="node.type === 'math'"
     class="ast-math"
-    v-html="katex.renderToString(node.value, { displayMode: true, throwOnError: false })"></div>
+    v-html="renderMath(node.value, true)"
+  />
 
   <strong v-else-if="node.type === 'strong'" class="ast-strong">
-    <AstRenderer v-for="(child, idx) in node.children" :key="idx" :node="child" />
+    <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
   </strong>
 
   <em v-else-if="node.type === 'emphasis'" class="ast-emphasis">
-    <AstRenderer v-for="(child, idx) in node.children" :key="idx" :node="child" />
+    <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
   </em>
 
-  <code v-else-if="node.type === 'inlineCode'"
-    class="ast-inline-code">{{
-      node.value }}</code>
+  <del v-else-if="node.type === 'delete'" class="ast-delete">
+    <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
+  </del>
 
-  <a v-else-if="node.type === 'link'" :href="node.url"
+  <code v-else-if="node.type === 'inlineCode'" class="ast-inline-code">{{ node.value }}</code>
+
+  <a
+    v-else-if="node.type === 'link' && safeLinkHref(node.url)"
+    :href="safeLinkHref(node.url)"
     class="ast-link"
-    target="_blank">
-    <AstRenderer v-for="(child, idx) in node.children" :key="idx" :node="child" />
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
   </a>
 
-  <component v-else-if="node.type === 'heading' && node.depth >= 3" :is="`h${node.depth}`" :class="[
-    'ast-heading',
-    `ast-heading-${node.depth}`
-  ]">
-    <AstRenderer v-for="(child, idx) in node.children" :key="idx" :node="child" />
+  <span v-else-if="node.type === 'link'" class="ast-invalid-link">
+    <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
+  </span>
+
+  <component
+    :is="headingTag(node.depth)"
+    v-else-if="node.type === 'heading'"
+    :class="['ast-heading', `ast-heading-${node.depth}`]"
+  >
+    <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
   </component>
 
   <template v-else-if="node.type === 'paragraph'">
-    <div v-if="isPureMedia(node)" class="ast-media-gallery"
-      :style="{ gridTemplateColumns: `repeat(${getGridCols(getMediaChildren(node).length)}, minmax(0, 1fr))` }">
-      <AstRenderer v-for="(child, idx) in getMediaChildren(node)" :key="idx" :node="child" />
+    <div
+      v-if="isPureMedia(node)"
+      class="ast-media-gallery"
+      :style="{ gridTemplateColumns: `repeat(${gridColumns(mediaChildren(node).length)}, minmax(0, 1fr))` }"
+    >
+      <AstRenderer
+        v-for="(child, index) in mediaChildren(node)"
+        :key="index"
+        :node="child"
+      />
     </div>
     <p v-else class="ast-paragraph">
-      <AstRenderer v-for="(child, idx) in node.children" :key="idx" :node="child" />
+      <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
     </p>
   </template>
 
-  <video v-else-if="node.type === 'image' && isVideo(node.url)" :src="resolveUrl(node.url)" controls
-    class="ast-media ast-video"></video>
+  <video
+    v-else-if="node.type === 'image' && isVideo(node.url) && resolveMediaUrl(node.url)"
+    :src="resolveMediaUrl(node.url)"
+    controls
+    preload="metadata"
+    referrerpolicy="no-referrer"
+    class="ast-media ast-video"
+  />
 
-  <img v-else-if="node.type === 'image' && !isVideo(node.url)" :src="resolveUrl(node.url)" :alt="node.alt"
-    class="ast-media ast-image" />
+  <img
+    v-else-if="node.type === 'image' && resolveMediaUrl(node.url)"
+    :src="resolveMediaUrl(node.url)"
+    :alt="String(node.alt ?? '')"
+    decoding="async"
+    referrerpolicy="no-referrer"
+    class="ast-media ast-image"
+  />
 
-  <blockquote v-else-if="node.type === 'blockquote'"
-    class="ast-blockquote">
-    <AstRenderer v-for="(child, idx) in node.children" :key="idx" :node="child" />
+  <span v-else-if="node.type === 'image'" class="ast-media-error">[无法加载的媒体资源]</span>
+
+  <blockquote v-else-if="node.type === 'blockquote'" class="ast-blockquote">
+    <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
   </blockquote>
 
-  <div v-else-if="node.type === 'table'"
-    class="ast-table-wrapper">
+  <div v-else-if="node.type === 'table'" class="ast-table-wrapper">
     <table class="ast-table">
-      <AstRenderer v-for="(child, idx) in node.children" :key="idx" :node="child" />
+      <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
     </table>
   </div>
 
   <tr v-else-if="node.type === 'tableRow'" class="ast-table-row">
-    <AstRenderer v-for="(child, idx) in node.children" :key="idx" :node="child" />
+    <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
   </tr>
 
   <td v-else-if="node.type === 'tableCell'" class="ast-table-cell">
-    <AstRenderer v-for="(child, idx) in node.children" :key="idx" :node="child" />
+    <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
   </td>
 
-  <component :is="node.ordered ? 'ol' : 'ul'" v-else-if="node.type === 'list'" :class="[
-    'ast-list',
-    node.ordered ? 'ast-list-ordered' : 'ast-list-unordered'
-  ]">
-    <AstRenderer v-for="(child, idx) in node.children" :key="idx" :node="child" />
+  <component
+    :is="node.ordered ? 'ol' : 'ul'"
+    v-else-if="node.type === 'list'"
+    :class="['ast-list', node.ordered ? 'ast-list-ordered' : 'ast-list-unordered']"
+  >
+    <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
   </component>
 
-  <li v-else-if="node.type === 'listItem'"
-    class="ast-list-item">
-    <AstRenderer v-for="(child, idx) in node.children" :key="idx" :node="child" />
+  <li v-else-if="node.type === 'listItem'" class="ast-list-item">
+    <AstRenderer v-for="(child, index) in node.children" :key="index" :node="child" />
   </li>
 
-  <div v-else-if="node.type === 'code'" class="ast-code-block">
+  <div
+    v-else-if="node.type === 'code'"
+    class="ast-code-block"
+    :data-render-state="isRendering ? 'pending' : 'ready'"
+  >
+    <div v-if="renderError" class="ast-render-error">
+      渲染失败：{{ renderError }}
+    </div>
 
-    <div v-if="node.lang === 'mermaid'" class="ast-mermaid" v-html="highlightedCode"></div>
+    <div
+      v-else-if="node.lang === 'mermaid'"
+      class="ast-mermaid"
+      v-html="renderedMarkup"
+    />
 
-    <div v-else-if="node.lang === 'pseudo' || node.lang === 'algorithm'"
-      class="ast-pseudo">
-      <div
-        class="ast-pseudo-header">
-        <span>Algorithm</span>
+    <div v-else-if="node.lang === 'pseudo' || node.lang === 'algorithm'" class="ast-pseudo">
+      <div class="ast-code-meta">
+        <span class="ast-code-dot" />
+        <span class="ast-code-lang">Algorithm</span>
         <span class="ast-pseudo-title">{{ pseudoTitle }}</span>
       </div>
       <ol class="ast-pseudo-lines">
-        <li v-for="(line, idx) in pseudoLines" :key="idx" class="ast-pseudo-line">
-          <span v-html="formatPseudoLine(line)"></span>
+        <li v-for="(line, index) in pseudoLines" :key="index" class="ast-pseudo-line">
+          <template v-for="(token, tokenIndex) in pseudoTokens(line)" :key="tokenIndex">
+            <strong v-if="token.keyword" class="ast-pseudo-keyword">{{ token.text }}</strong>
+            <template v-else>{{ token.text }}</template>
+          </template>
         </li>
       </ol>
     </div>
 
-    <div v-else
-      class="ast-code-frame">
-      <!-- 代码块头部 -->
-      <div
-        class="ast-code-meta">
-        <span v-if="node.lang"
-          class="ast-code-lang">{{ node.lang
-          }}</span>
+    <div v-else class="ast-code-frame">
+      <div v-if="node.lang" class="ast-code-meta">
+        <span class="ast-code-dot" />
+        <span class="ast-code-lang">{{ node.lang }}</span>
       </div>
-      <!-- 代码块内容 -->
-      <div
-        class="ast-code-content"
-        v-html="highlightedCode"></div>
+      <pre v-if="fallbackCode" class="ast-code-fallback"><code>{{ fallbackCode }}</code></pre>
+      <div v-else class="ast-code-content" v-html="renderedMarkup" />
     </div>
-
   </div>
 </template>
 
 <style scoped>
-li>p {
-  margin-bottom: 0;
-}
-
-.media-gallery>img,
-.media-gallery>video {
-  width: 100% !important;
-  height: 100% !important;
-  max-height: 40vh !important;
-  object-fit: cover !important;
-  aspect-ratio: 16 / 9;
-  margin: 0 !important;
-}
-
-.media-gallery:has(> :only-child)>img,
-.media-gallery:has(> :only-child)>video {
-  object-fit: contain !important;
-  max-height: 70vh !important;
-  aspect-ratio: auto;
-}
-
-/* 表格样式 */
-table tr:first-child {
-  font-weight: 600;
-  background: linear-gradient(to right, rgb(241, 245, 250), rgb(240, 249, 245));
-}
-
-:global(.dark) table tr:first-child {
-  background: linear-gradient(to right, rgb(30, 41, 59), rgb(20, 42, 40));
-}
-
-/* 数学公式优化 */
-.math-display {
-  font-size: clamp(0.95rem, 1.1vw, 1.15rem);
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-@media print {
-  .page-break-inside-avoid {
-    page-break-inside: avoid;
-  }
-
-  .math-display {
-    overflow-x: visible !important;
-    white-space: normal !important;
-    page-break-inside: avoid;
-  }
-
-  .math-display :deep(.katex-display) {
-    max-width: 100%;
-    overflow-wrap: break-word;
-    display: inline-block;
-  }
-}
 .ast-inline-math {
   display: inline-block;
+  margin: 0 0.12em;
   vertical-align: middle;
+  color: #6f145f;
 }
 
 .ast-math {
-  margin: 1.5rem 0;
+  margin: 1.5em 0;
   overflow-x: auto;
-  overflow-y: hidden;
+  border: 1px solid #e4d2e1;
+  border-radius: 0.65em;
+  background: #faf6f9;
+  padding: 1.1em;
+  color: #272227;
 }
 
-.ast-strong {
-  font-weight: 600;
-}
-
-.ast-emphasis {
-  font-style: italic;
-}
+.ast-strong { font-weight: 650; color: #171217; }
+.ast-emphasis { font-style: italic; }
+.ast-delete { color: #777077; }
+.ast-invalid-link { color: #777077; }
 
 .ast-inline-code {
-  display: inline-block;
-  margin: 0 0.15rem;
-  padding: 0.1rem 0.4rem;
-  border-radius: 0.375rem;
-  background: var(--ast-inline-code-bg, rgba(15, 23, 42, 0.06));
-  color: var(--ast-inline-code-color, inherit);
-  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
-  font-size: 0.92em;
-}
-
-:global(.dark) .ast-inline-code {
-  background: var(--ast-inline-code-bg-dark, rgba(148, 163, 184, 0.2));
-  color: var(--ast-inline-code-color-dark, #e2e8f0);
+  margin: 0 0.12em;
+  border: 1px solid #e3d2e0;
+  border-radius: 0.3em;
+  background: #faf6f9;
+  padding: 0.08em 0.38em;
+  color: #6f145f;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 0.9em;
 }
 
 .ast-link {
-  color: var(--ast-link-color, inherit);
+  color: #6f145f;
+  font-weight: 550;
   text-decoration: underline;
-  text-underline-offset: 0.16em;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.2em;
 }
 
 .ast-heading {
-  margin: 1.75rem 0 0.85rem;
-  font-weight: 600;
-  line-height: 1.35;
-  color: var(--ast-heading-color, inherit);
+  color: #201b20;
+  font-weight: 650;
+  line-height: 1.3;
 }
-
-.ast-heading-3 {
-  font-size: 1.4rem;
-}
-
-.ast-heading-4 {
-  font-size: 1.18rem;
-}
-
+.ast-heading-1 { margin: 2.2rem 0 1rem; font-size: 2.35em; }
+.ast-heading-2 { margin: 2rem 0 0.9rem; font-size: 1.75em; }
+.ast-heading-3 { margin: 1.65rem 0 0.75rem; font-size: 1.35em; }
+.ast-heading-4 { margin: 1.4rem 0 0.65rem; font-size: 1.15em; }
 .ast-heading-5,
-.ast-heading-6 {
-  font-size: 1rem;
-}
+.ast-heading-6 { margin: 1.2rem 0 0.55rem; font-size: 1em; }
 
 .ast-paragraph {
-  margin-bottom: 1rem;
-  color: var(--ast-paragraph-color, inherit);
+  margin: 0 0 1em;
+  line-height: inherit;
+}
+
+.ast-divider {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid #eaddea;
 }
 
 .ast-media-gallery {
   display: grid;
-  gap: 1rem;
-  margin: 1.5rem 0;
   align-items: center;
+  gap: 1rem;
+  margin: 1.4rem 0;
 }
 
 .ast-media {
   display: block;
-  width: 100%;
+  width: auto;
   max-width: 100%;
-  max-height: 60vh;
-  margin: 0 auto;
+  max-height: 68vh;
+  margin: 1.2rem auto;
+  border-radius: 0.55rem;
   object-fit: contain;
 }
 
 .ast-media-gallery > .ast-media {
+  width: 100%;
   height: 100%;
   max-height: 40vh;
+  margin: 0;
   object-fit: cover;
   aspect-ratio: 16 / 9;
 }
 
 .ast-media-gallery:has(> :only-child) > .ast-media {
-  max-height: 70vh;
+  width: auto;
+  max-height: 68vh;
   object-fit: contain;
   aspect-ratio: auto;
 }
 
+.ast-media-error { color: #a33b4c; font-size: 0.9em; }
+
 .ast-blockquote {
-  margin: 1.5rem 0;
-  padding-left: 1rem;
-  border-left: 2px solid var(--ast-blockquote-border, #d4d4d8);
-  color: var(--ast-blockquote-color, inherit);
-  background: var(--ast-blockquote-bg, transparent);
+  margin: 1.4rem 0;
+  border-left: 4px solid #6f145f;
+  border-radius: 0 0.55rem 0.55rem 0;
+  background: #faf6f9;
+  padding: 0.85rem 1.1rem;
+  color: #4a4149;
 }
 
-:global(.dark) .ast-blockquote {
-  border-left-color: var(--ast-blockquote-border-dark, #52525b);
-  color: var(--ast-blockquote-color-dark, #d4d4d8);
-  background: var(--ast-blockquote-bg-dark, transparent);
-}
+.ast-blockquote :deep(.ast-paragraph:last-child) { margin-bottom: 0; }
 
 .ast-table-wrapper {
   width: 100%;
-  margin: 1.75rem 0;
-  overflow-x: auto;
-}
-
-.ast-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.ast-table-row {
-  border-bottom: 1px solid var(--ast-table-row-border, #e4e4e7);
-}
-
-:global(.dark) .ast-table-row {
-  border-bottom-color: var(--ast-table-row-border-dark, #3f3f46);
-}
-
-.ast-table-row:first-child {
-  background: transparent;
-}
-
-.ast-table-cell {
-  padding: 0.8rem 1rem;
-  vertical-align: top;
-  color: var(--ast-table-cell-color, inherit);
-}
-
-:global(.dark) .ast-table-cell {
-  color: var(--ast-table-cell-color-dark, #e4e4e7);
-}
-
-.ast-list {
-  margin: 1rem 0;
-  padding-left: 1.5rem;
-}
-
-.ast-list-ordered {
-  list-style: decimal;
-}
-
-.ast-list-unordered {
-  list-style: disc;
-}
-
-.ast-list-item {
-  margin: 0.35rem 0;
-}
-
-.ast-list-item > :deep(p) {
-  margin-bottom: 0;
-}
-
-.ast-code-block {
-  width: 100%;
   margin: 1.5rem 0;
+  overflow-x: auto;
+  border: 1px solid #dfcedc;
+  border-radius: 0.6rem;
 }
 
+.ast-table { width: 100%; border-collapse: collapse; }
+.ast-table-row { border-bottom: 1px solid #eaddea; }
+.ast-table-row:last-child { border-bottom: 0; }
+.ast-table-row:first-child { background: #6f145f; font-weight: 650; }
+.ast-table-row:first-child .ast-table-cell { color: white; }
+.ast-table-cell { padding: 0.72rem 0.9rem; vertical-align: top; }
+
+.ast-list { margin: 0.85rem 0 1.1rem; padding-left: 1.5rem; }
+.ast-list-unordered { list-style: disc; }
+.ast-list-ordered { list-style: decimal; }
+.ast-list-item { margin: 0.3rem 0; padding-left: 0.2rem; }
+.ast-list-item::marker { color: #6f145f; font-weight: 650; }
+.ast-list-item > :deep(.ast-paragraph) { margin-bottom: 0; }
+
+.ast-code-block { width: 100%; margin: 1.4rem 0; }
 .ast-code-frame,
 .ast-pseudo {
   overflow: hidden;
-  border: 1px solid var(--ast-code-border, #e4e4e7);
-  border-radius: 0.9rem;
-  background: var(--ast-code-bg, transparent);
+  border: 1px solid #d8c1d4;
+  border-radius: 0.6rem;
+  background: white;
+  box-shadow: 0 3px 14px rgb(69 24 62 / 6%);
 }
 
-:global(.dark) .ast-code-frame,
-:global(.dark) .ast-pseudo {
-  border-color: var(--ast-code-border-dark, #3f3f46);
-  background: var(--ast-code-bg-dark, transparent);
-}
-
-.ast-code-meta,
-.ast-pseudo-header {
+.ast-code-meta {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.7rem 1rem;
-  border-bottom: 1px solid var(--ast-code-meta-border, #e4e4e7);
-  background: var(--ast-code-meta-bg, rgba(15, 23, 42, 0.035));
-  font-size: 0.78rem;
-  color: var(--ast-code-meta-color, inherit);
+  gap: 0.55rem;
+  border-bottom: 1px solid #eaddea;
+  background: #f8f3f7;
+  padding: 0.55rem 0.85rem;
 }
-
-:global(.dark) .ast-code-meta,
-:global(.dark) .ast-pseudo-header {
-  border-bottom-color: var(--ast-code-meta-border-dark, #3f3f46);
-  background: var(--ast-code-meta-bg-dark, rgba(148, 163, 184, 0.08));
-  color: var(--ast-code-meta-color-dark, #d4d4d8);
-}
-
-.ast-code-lang,
-.ast-pseudo-header {
-  letter-spacing: 0.08em;
+.ast-code-dot { width: 0.42rem; height: 0.42rem; border-radius: 50%; background: #6f145f; }
+.ast-code-lang {
+  color: #6f145f;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
 }
-
-.ast-pseudo-title {
-  font-style: italic;
-  text-transform: none;
-  letter-spacing: normal;
-}
-
+.ast-pseudo-title { color: #766c75; font-size: 0.78rem; font-style: italic; }
 .ast-pseudo-lines {
   margin: 0;
-  padding: 1rem 1rem 1rem 2.8rem;
-  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
-  color: var(--ast-pseudo-color, inherit);
+  padding: 0.85rem 1rem 0.85rem 2.8rem;
+  background: #faf8fa;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 0.86em;
+  line-height: 1.65;
 }
-
-:global(.dark) .ast-pseudo-lines {
-  color: var(--ast-pseudo-color-dark, #e4e4e7);
-}
-
-.ast-pseudo-line {
-  padding-left: 0.4rem;
-  white-space: pre-wrap;
-}
-
-.ast-pseudo-keyword {
-  font-weight: 600;
-}
-
-.ast-code-content {
-  padding: 0;
-}
-
-.ast-code-content :deep(pre),
+.ast-pseudo-line { padding-left: 0.35rem; white-space: pre-wrap; }
+.ast-pseudo-keyword { color: #6f145f; font-weight: 650; }
 .ast-code-fallback {
   margin: 0;
-  padding: 1rem 1.1rem;
   overflow-x: auto;
-  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
-  font-size: 0.92rem;
-  line-height: 1.7;
+  background: #faf8fa;
+  padding: 0.9rem 1rem;
+  color: #24292f;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 0.86em;
+  line-height: 1.65;
+  white-space: pre;
 }
-
-.ast-code-content :deep(pre) {
-  background: transparent !important;
+.ast-code-content { overflow-x: auto; background: #faf8fa; padding: 0.9rem 1rem; }
+.ast-code-content :deep(pre),
+.ast-code-content :deep(.shiki) { margin: 0; padding: 0; background: transparent !important; }
+.ast-code-content :deep(code) {
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 0.86em;
+  line-height: 1.65;
 }
-
 .ast-mermaid {
+  display: flex;
+  justify-content: center;
   overflow-x: auto;
+  border: 1px solid #e1d4df;
+  border-radius: 0.6rem;
+  background: white;
+  padding: 1rem;
 }
+.ast-mermaid :deep(svg) { max-width: 100%; height: auto; }
+.ast-render-error {
+  border: 1px solid #e5c5cb;
+  border-radius: 0.5rem;
+  background: #fff6f7;
+  padding: 0.75rem 0.9rem;
+  color: #9b3044;
+  font-size: 0.86em;
+}
+
+:global(.dark .ast-strong),
+:global(.dark .ast-heading) { color: #fff7fc; }
+:global(.dark .ast-paragraph) { color: #e7e0e6; }
+:global(.dark .ast-emphasis) { color: #eee6ed; }
+:global(.dark .ast-delete),
+:global(.dark .ast-invalid-link) { color: #bcaeb9; }
+:global(.dark .ast-link),
+:global(.dark .ast-inline-math) { color: #f0a7df; }
+:global(.dark .ast-inline-code),
+:global(.dark .ast-math),
+:global(.dark .ast-blockquote) { border-color: #604157; background: #281d26; color: #f0e7ee; }
+:global(.dark .ast-divider) { border-color: #513b4c; }
+:global(.dark .ast-list-item)::marker { color: #e892d5; }
+:global(.dark .ast-code-frame),
+:global(.dark .ast-pseudo),
+:global(.dark .ast-mermaid) { border-color: #604157; background: #171217; }
+:global(.dark .ast-code-meta) { border-color: #604157; background: #2d202a; }
+:global(.dark .ast-code-lang),
+:global(.dark .ast-pseudo-keyword) { color: #f0a7df; }
+:global(.dark .ast-pseudo-title) { color: #c8bbc5; }
+:global(.dark .ast-code-content),
+:global(.dark .ast-code-fallback),
+:global(.dark .ast-pseudo-lines) { background: #171217; color: #f1e9ef; }
+:global(.dark .ast-table-wrapper),
+:global(.dark .ast-table-row) { border-color: #604157; }
 </style>

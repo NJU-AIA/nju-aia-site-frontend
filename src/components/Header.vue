@@ -1,4 +1,4 @@
-﻿<!-- Header.vue -->
+<!-- Header.vue -->
 <template>
   <header
     class="fixed top-0 z-50 w-full border-b border-gray-100 bg-white/90 backdrop-blur-sm transition-all duration-300 dark:border-gray-800 dark:bg-gray-950/90"
@@ -8,13 +8,13 @@
         <img src="/logo.png" alt="AIA Logo" class="h-7 w-7 object-contain" />
         <span class="text-sm font-semibold tracking-tight text-gray-900 dark:text-gray-50">NJU AIA</span>
         <span
-          class="hidden text-sm text-gray-400 transition-colors group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300 lg:inline-block"
+          class="hidden text-sm text-gray-400 transition-colors group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300 2xl:inline-block"
         >
           南京大学人工智能协会
         </span>
       </a>
 
-      <ul class="hidden items-center gap-7 text-sm font-medium text-gray-600 dark:text-gray-400 md:flex">
+      <ul class="hidden items-center gap-4 text-sm font-medium text-gray-600 dark:text-gray-400 lg:flex xl:gap-6">
         <li v-for="link in navLinks" :key="link.name">
           <a
             :href="link.href"
@@ -80,7 +80,7 @@
 
         <button
           @click="mobileMenuOpen = !mobileMenuOpen"
-          class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 md:hidden"
+          class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 lg:hidden"
           aria-label="打开导航菜单"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -91,7 +91,7 @@
 
       <div
         v-if="mobileMenuOpen"
-        class="absolute left-0 top-14 w-full border-b border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950 md:hidden"
+        class="absolute left-0 top-14 w-full border-b border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950 lg:hidden"
       >
         <ul class="flex flex-col gap-4 px-6 py-4 text-sm font-medium text-gray-700 dark:text-gray-300">
           <li v-for="link in navLinks" :key="link.name">
@@ -119,6 +119,7 @@ const mobileMenuOpen = ref(false)
 
 const navLinks = [
   { name: '首页', href: '/' },
+  { name: '活动预热', href: '/activity-previews' },
   { name: '活动推文', href: '/activity-posts' },
   { name: '技术教程', href: '/tech-tutorials' },
   // { name: 'LiveCode', href: '/livecodes' },

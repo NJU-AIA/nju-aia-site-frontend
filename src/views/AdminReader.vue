@@ -1,10 +1,10 @@
-﻿<template>
-  <div class="w-full h-[calc(100vh-4rem)] overflow-hidden bg-white dark:bg-gray-950 flex transition-colors duration-300 relative">
+<template>
+  <div class="relative flex h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-white transition-colors duration-300 dark:bg-gray-950">
 
     <!-- Sidebar -->
     <transition name="slide-sidebar">
       <div v-if="showSidebar"
-        class="w-[240px] h-full bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 flex flex-col shrink-0 z-20 absolute md:relative">
+        class="absolute z-20 flex h-full w-[260px] shrink-0 flex-col border-r border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900 md:relative xl:w-[280px] 2xl:w-[300px]">
 
         <!-- Sidebar Header -->
         <div class="h-12 px-3 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
@@ -116,10 +116,13 @@
     </transition>
 
     <!-- Main Content: 编辑 + 预览，撑满剩余高度 -->
-    <div class="flex-1 h-full flex overflow-hidden min-w-0">
+    <div ref="workspaceRef" class="flex h-full min-w-0 flex-1 overflow-hidden">
 
       <!-- Editor Panel -->
-      <div class="w-1/2 h-full border-r border-gray-100 dark:border-gray-800 flex flex-col min-w-0">
+      <div
+        class="flex h-full min-w-0 shrink-0 flex-col"
+        :style="{ width: `${editorRatio}%` }"
+      >
 
         <!-- Editor Toolbar -->
         <div class="h-12 px-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0 bg-white dark:bg-gray-950">
@@ -158,7 +161,7 @@
               <input v-model="form.title" type="text" placeholder="请输入文章标题"
                 class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF] transition-colors" />
             </div>
-            <div class="grid grid-cols-5 gap-3">
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-3">
               <div>
                 <label class="block text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-1">作者</label>
                 <input v-model="form.author" type="text" placeholder="作者"
@@ -168,14 +171,16 @@
                 <label class="block text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-1">分类</label>
                 <select v-model="form.category"
                   class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF] transition-colors">
-                  <option value="activity">activity</option>
-                  <option value="tutorial">tutorial</option>
+                  <option value="preview">活动预热</option>
+                  <option value="activity">活动推文</option>
+                  <option value="tutorial">技术教程</option>
                 </select>
               </div>
               <div>
                 <label class="block text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-1">展示模式</label>
                 <select v-model="form.defaultMode"
                   class="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 outline-none focus:border-[#40B3FF] transition-colors">
+                  <option value="article">article</option>
                   <option value="slide">slide</option>
                   <option value="activity">activity</option>
                   <option value="color">color</option>
@@ -212,7 +217,7 @@
           <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
             <label class="block text-[11px] font-medium text-gray-400 dark:text-gray-500 mb-1.5">Markdown 内容</label>
             <textarea v-model="form.content"
-              class="w-full min-h-[320px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-3 text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed resize-none outline-none focus:border-[#40B3FF] transition-colors custom-scrollbar"
+              class="custom-scrollbar min-h-[420px] w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-3 font-mono text-sm leading-relaxed text-gray-800 outline-none transition-colors focus:border-[#40B3FF] dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 xl:min-h-[48vh]"
               placeholder="# 请输入正文"></textarea>
           </div>
 
@@ -291,8 +296,19 @@
         </div>
       </div>
 
+      <!-- Resizable divider -->
+      <div
+        class="group hidden h-full w-1.5 shrink-0 cursor-col-resize items-center justify-center border-x border-gray-100 bg-gray-50 transition-colors hover:bg-blue-50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-blue-950/40 lg:flex"
+        :class="isResizing ? 'bg-blue-50 dark:bg-blue-950/40' : ''"
+        title="拖动调整编辑与预览宽度；双击恢复默认"
+        @pointerdown="startResize"
+        @dblclick="resetSplit"
+      >
+        <span class="h-12 w-0.5 rounded-full bg-gray-300 transition-colors group-hover:bg-[#40B3FF] dark:bg-gray-700"></span>
+      </div>
+
       <!-- Preview Panel -->
-      <div class="w-1/2 h-full flex flex-col min-w-0">
+      <div class="flex h-full min-w-0 flex-1 flex-col">
 
         <!-- Preview Toolbar -->
         <div class="h-12 px-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0 bg-white dark:bg-gray-950">
@@ -302,6 +318,21 @@
           </div>
 
           <div class="flex items-center gap-2">
+            <div class="hidden items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5 dark:border-gray-700 dark:bg-gray-900 xl:flex">
+              <button
+                v-for="option in layoutOptions"
+                :key="option.editor"
+                type="button"
+                class="rounded-md px-2 py-0.5 text-[10px] font-medium tabular-nums transition-colors"
+                :class="Math.abs(editorRatio - option.editor) < 1
+                  ? 'bg-white text-[#168BD2] shadow-sm dark:bg-gray-800 dark:text-[#40B3FF]'
+                  : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                :title="option.title"
+                @click="setEditorRatio(option.editor)"
+              >
+                {{ option.label }}
+              </button>
+            </div>
             <label for="admin-preview-style" class="text-xs text-gray-500 dark:text-gray-400">风格</label>
             <select
               id="admin-preview-style"
@@ -333,7 +364,17 @@
 
         <div class="flex-1 overflow-y-auto custom-scrollbar relative">
           <transition name="fade-view" mode="out-in">
-            <SlideView v-if="previewMode === 'slide' && currentSlide" :slide="currentSlide" />
+            <ArticleDocument
+              v-if="previewMode === 'article'"
+              :id="form.id || 'preview'"
+              :title="form.title || '未命名文章'"
+              :author="form.author"
+              :date="form.date"
+              :category="form.category"
+              :cover="form.cover"
+              :nodes="articleNodes"
+            />
+            <FixedSlideStage v-else-if="previewMode === 'slide' && currentSlide" :slide="currentSlide" />
             <ActivityView v-else-if="previewMode === 'activity'" :slides="parsedSlides" :date="form.date" />
             <ColorView v-else-if="previewMode === 'color'" :slides="parsedSlides" :date="form.date" />
             <ElegantView v-else-if="previewMode === 'elegant'" :slides="parsedSlides" :date="form.date" />
@@ -381,7 +422,7 @@
   scrollbar-color: #e2e8f0 transparent;
 }
 
-:global(.dark) .custom-scrollbar {
+.dark .custom-scrollbar {
   scrollbar-color: #1e293b transparent;
 }
 
@@ -403,11 +444,11 @@
   background-color: #cbd5e1;
 }
 
-:global(.dark) .custom-scrollbar::-webkit-scrollbar-thumb {
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: #1e293b;
 }
 
-:global(.dark) .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #334155;
 }
 </style>
@@ -416,11 +457,12 @@
 
 import { ref, computed, onMounted, onUnmounted, provide, type ComputedRef, reactive, watch } from 'vue';
 import { useTheme } from '@/composables/useTheme';
-import { articlesApi, type Article, type ArticleMode, type CreateArticleRequest } from '@/api/articles';
+import { articlesApi, type Article, type ArticleCategory, type ArticleMode, type CreateArticleRequest } from '@/api/articles';
 import { assetsApi, type AssetRecord } from '@/api/assets';
-import { parseMarkdownToSlides, type SlideNode } from '@/core/parser';
+import { parseMarkdownDocument, parseMarkdownToSlides, type SlideNode } from '@/core/parser';
 
-import SlideView from '@/components/SlideView.vue';
+import ArticleDocument from '@/components/ArticleDocument.vue';
+import FixedSlideStage from '@/components/FixedSlideStage.vue';
 import ActivityView from '@/components/ActivityView.vue';
 import ColorView from '@/components/ColorView.vue';
 import ElegantView from '@/components/ElegantView.vue';
@@ -428,7 +470,6 @@ import LineView from '@/components/LineView.vue';
 import MinimalView from '@/components/MinimalView.vue';
 import TechnicalView from '@/components/TechnicalView.vue';
 
-type ArticleCategory = 'activity' | 'tutorial';
 
 interface ArticleListItem {
   id: string;
@@ -453,19 +494,30 @@ interface AdminFormState {
   defaultMode: ArticleMode;
 }
 
-const availableViewModes = ['slide', 'activity', 'color', 'elegant', 'line', 'minimal', 'technical'] as const;
+const availableViewModes = ['article', 'slide', 'activity', 'color', 'elegant', 'line', 'minimal', 'technical'] as const;
 
 function normalizeViewMode(mode?: ArticleMode | string): ArticleMode {
-  if (!mode) return 'minimal';
+  if (!mode) return 'article';
   if (availableViewModes.includes(mode as (typeof availableViewModes)[number])) return mode as ArticleMode;
-  if (mode === 'article') return 'minimal';
   if (mode === 'homework') return 'line';
-  return 'minimal';
+  return 'article';
 }
 
 const { isDark, toggleTheme } = useTheme();
 
 const showSidebar = ref(true);
+const workspaceRef = ref<HTMLElement | null>(null);
+const DEFAULT_EDITOR_RATIO = 45;
+const MIN_EDITOR_RATIO = 32;
+const MAX_EDITOR_RATIO = 68;
+const EDITOR_RATIO_STORAGE_KEY = 'aia-admin-editor-ratio';
+const editorRatio = ref(DEFAULT_EDITOR_RATIO);
+const isResizing = ref(false);
+const layoutOptions = [
+  { editor: 45, label: '45/55', title: '预览区域稍宽' },
+  { editor: 50, label: '50/50', title: '编辑与预览均分' },
+  { editor: 60, label: '60/40', title: '编辑区域更宽' },
+] as const;
 const currentSlideIndex = ref(0);
 const keyword = ref('');
 const isLoading = ref(false);
@@ -477,18 +529,18 @@ const selectedId = ref('');
 const isCreating = ref(false);
 
 const articles = ref<ArticleListItem[]>([]);
-const previewMode = ref<ArticleMode>('minimal');
+const previewMode = ref<ArticleMode>('article');
 
 const form = ref<AdminFormState>({
   id: '',
   title: '',
   author: '',
-  category: 'activity',
+  category: 'preview',
   date: new Date().toISOString().slice(0, 10),
   published: false,
   content: '',
   cover: '',
-  defaultMode: 'minimal',
+  defaultMode: 'article',
 });
 
 const ASSET_BASE_URL = import.meta.env.VITE_ASSET_BASE_URL || '/assets';
@@ -509,6 +561,57 @@ const assetFileInputRef = ref<HTMLInputElement | null>(null);
 const assetSelectedFile = ref<File | null>(null);
 const assetName = ref('');
 const assetOverwrite = ref(false);
+
+function clampEditorRatio(value: number): number {
+  return Math.min(Math.max(value, MIN_EDITOR_RATIO), MAX_EDITOR_RATIO);
+}
+
+function persistEditorRatio() {
+  localStorage.setItem(EDITOR_RATIO_STORAGE_KEY, String(Math.round(editorRatio.value * 10) / 10));
+}
+
+function setEditorRatio(value: number) {
+  editorRatio.value = clampEditorRatio(value);
+  persistEditorRatio();
+}
+
+function resetSplit() {
+  setEditorRatio(DEFAULT_EDITOR_RATIO);
+}
+
+function handleResizeMove(event: PointerEvent) {
+  if (!isResizing.value || !workspaceRef.value) return;
+
+  const bounds = workspaceRef.value.getBoundingClientRect();
+  if (bounds.width <= 0) return;
+
+  const nextRatio = ((event.clientX - bounds.left) / bounds.width) * 100;
+  editorRatio.value = clampEditorRatio(nextRatio);
+}
+
+function stopResize() {
+  if (!isResizing.value) return;
+
+  isResizing.value = false;
+  persistEditorRatio();
+  window.removeEventListener('pointermove', handleResizeMove);
+  window.removeEventListener('pointerup', stopResize);
+  window.removeEventListener('pointercancel', stopResize);
+  document.body.style.userSelect = '';
+  document.body.style.cursor = '';
+}
+
+function startResize(event: PointerEvent) {
+  if (event.button !== 0) return;
+
+  event.preventDefault();
+  isResizing.value = true;
+  document.body.style.userSelect = 'none';
+  document.body.style.cursor = 'col-resize';
+  window.addEventListener('pointermove', handleResizeMove);
+  window.addEventListener('pointerup', stopResize);
+  window.addEventListener('pointercancel', stopResize);
+}
 
 function clearAssetMessage() {
   assetError.value = '';
@@ -661,7 +764,7 @@ function applyArticleToForm(article: Article) {
     id: article.id,
     title: article.title || '',
     author: article.author || '',
-    category: (article.category as ArticleCategory) || 'activity',
+    category: (article.category as ArticleCategory) || 'preview',
     date: formatDate(article.date || article.createdAt || article.updatedAt) || getTodayDateString(),
     published: Boolean(article.published),
     content: article.content || '',
@@ -680,14 +783,14 @@ function resetForm() {
       id: '',
       title: '',
       author: '',
-      category: 'activity',
+      category: 'preview',
       date: getTodayDateString(),
       published: false,
       content: '',
       cover: '',
-      defaultMode: 'minimal',
+      defaultMode: 'article',
     };
-    previewMode.value = 'minimal';
+    previewMode.value = 'article';
     currentSlideIndex.value = 0;
     articleAssets.value = [];
     clearAssetMessage();
@@ -710,15 +813,15 @@ function createNewArticle() {
     id: '',
     title: '',
     author: '',
-    category: 'activity',
+    category: 'preview',
     date: getTodayDateString(),
     published: false,
     content: '',
     cover: '',
-    defaultMode: 'minimal',
+    defaultMode: 'article',
   };
 
-  previewMode.value = 'minimal';
+  previewMode.value = 'article';
   articleAssets.value = [];
   assetSelectedFile.value = null;
   assetName.value = '';
@@ -739,9 +842,14 @@ const filteredArticles = computed(() => {
 });
 
 const groupedArticles = computed(() => ({
+  活动预热: filteredArticles.value.filter((item) => item.category === 'preview'),
   活动推文: filteredArticles.value.filter((item) => item.category === 'activity'),
   技术教程: filteredArticles.value.filter((item) => item.category === 'tutorial'),
 }));
+
+const articleNodes = computed(() => {
+  return form.value.content ? parseMarkdownDocument(form.value.content) : [];
+});
 
 const parsedSlides = computed<SlideNode[]>(() => {
   return form.value.content ? parseMarkdownToSlides(form.value.content) : [];
@@ -895,15 +1003,15 @@ async function deleteCurrentArticle() {
       id: '',
       title: '',
       author: '',
-      category: 'activity',
+      category: 'preview',
       date: getTodayDateString(),
       published: false,
       content: '',
       cover: '',
-      defaultMode: 'minimal',
+      defaultMode: 'article',
     };
 
-    previewMode.value = 'minimal';
+    previewMode.value = 'article';
     currentSlideIndex.value = 0;
 
     await fetchArticles();
@@ -971,11 +1079,17 @@ const toggleGroup = (groupName: string) => {
 }
 
 onMounted(async () => {
+  const storedRatio = Number(localStorage.getItem(EDITOR_RATIO_STORAGE_KEY));
+  if (Number.isFinite(storedRatio) && storedRatio > 0) {
+    editorRatio.value = clampEditorRatio(storedRatio);
+  }
+
   await fetchArticles();
   window.addEventListener('keydown', handleKeydown);
 });
 
 onUnmounted(() => {
+  stopResize();
   window.removeEventListener('keydown', handleKeydown);
 });
 </script>

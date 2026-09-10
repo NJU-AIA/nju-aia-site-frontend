@@ -79,7 +79,7 @@
                   :node="node"
                 />
               </div>
-              <div v-else class="livecode-code">
+              <div v-else-if="item.codeNode" class="livecode-code">
                 <AstRenderer
                   :key="`code-${item.block.language || 'text'}-${item.block.content}`"
                   :node="item.codeNode"

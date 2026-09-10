@@ -1,12 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import SiteLayout from '@/layouts/SiteLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
-import { getToken } from '@/api/auth'
+import { getCurrentUser } from '@/api/auth'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // 前台
     {
       path: '/',
       component: SiteLayout,
@@ -14,6 +13,10 @@ const router = createRouter({
         {
           path: '',
           component: () => import('@/views/Home.vue'),
+        },
+        {
+          path: 'activity-previews',
+          component: () => import('@/views/ActivityPreviews.vue'),
         },
         {
           path: 'activity-posts',
@@ -26,6 +29,14 @@ const router = createRouter({
         {
           path: 'reader',
           component: () => import('@/views/Reader.vue'),
+        },
+        {
+          path: 'article',
+          component: () => import('@/views/ArticleReader.vue'),
+        },
+        {
+          path: 'slides',
+          component: () => import('@/views/SlidesReader.vue'),
         },
         {
           path: 'about',
@@ -49,14 +60,10 @@ const router = createRouter({
         },
       ],
     },
-
-    // 后台登录页
     {
       path: '/admin/login',
       component: () => import('@/views/AdminLogin.vue'),
     },
-
-    // 后台管理页
     {
       path: '/admin',
       component: AdminLayout,
@@ -69,19 +76,25 @@ const router = createRouter({
         {
           path: 'articles',
           component: () => import('@/views/AdminReader.vue'),
+          meta: { adminLayout: 'workspace' },
         },
         {
           path: 'assets',
           component: () => import('@/views/AssetManager.vue'),
+          meta: { adminLayout: 'wide' },
         },
         {
           path: 'livecodes',
           component: () => import('@/views/AdminLivecodes.vue'),
+          meta: { adminLayout: 'workspace' },
+        },
+        {
+          path: 'users',
+          component: () => import('@/views/AdminUsers.vue'),
+          meta: { requiresOwner: true, adminLayout: 'wide' },
         },
       ],
     },
-
-    // 兜底
     {
       path: '/:pathMatch(.*)*',
       redirect: '/',
@@ -89,21 +102,29 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, _from, next) => {
-  const token = getToken()
+router.beforeEach(async (to) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const requiresOwner = to.matched.some((record) => record.meta.requiresOwner)
+  const isLoginPage = to.path === '/admin/login'
 
-  if (requiresAuth && !token) {
-    next('/admin/login')
-    return
+  if (!requiresAuth && !isLoginPage) {
+    return true
   }
 
-  if (to.path === '/admin/login' && token) {
-    next('/admin/articles')
-    return
+  const user = await getCurrentUser()
+  if (requiresAuth && !user) {
+    return {
+      path: '/admin/login',
+      query: { redirect: to.fullPath },
+    }
   }
-
-  next()
+  if (requiresOwner && user?.role !== 'owner') {
+    return '/admin/articles'
+  }
+  if (isLoginPage && user) {
+    return '/admin/articles'
+  }
+  return true
 })
 
 export default router

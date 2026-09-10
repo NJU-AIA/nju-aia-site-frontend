@@ -24,7 +24,7 @@
             立即加入
           </router-link>
 
-          <router-link to="/activity-posts"
+          <router-link to="/activity-previews"
             class="px-12 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-white transition-all duration-200">
             了解更多
           </router-link>
@@ -50,18 +50,18 @@
       <div class="mb-12">
         <p class="text-xs font-medium text-[#40B3FF] uppercase tracking-widest mb-3">Activities</p>
         <h2 class="text-3xl md:text-4xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
-          近期活动
+          近期活动预热
         </h2>
       </div>
 
       <!-- 只有首次没有缓存时才显示 loading -->
-      <div v-if="activityPostsStore.isLoading && !activityPostsStore.hasData"
+      <div v-if="activityPreviewsStore.isLoading && !activityPreviewsStore.hasData"
         class="py-20 text-center text-gray-400 text-sm">
-        正在加载近期活动...
+        正在加载近期活动预热...
       </div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <router-link v-for="post in recentEvents" :key="post.id" :to="`/reader?id=${post.id}`"
+      <div v-else-if="recentEvents.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <router-link v-for="post in recentEvents" :key="post.id" :to="routeForArticle(post.id, post.defaultMode)"
           class="group block outline-none">
           <div
             class="h-full flex flex-col p-6 border border-gray-100 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200">
@@ -94,8 +94,12 @@
         </router-link>
       </div>
 
-      <p v-if="activityPostsStore.error && !activityPostsStore.hasData" class="mt-6 text-center text-sm text-red-500">
-        {{ activityPostsStore.error }}
+      <p v-else-if="activityPreviewsStore.error" class="mt-6 text-center text-sm text-red-500">
+        {{ activityPreviewsStore.error }}
+      </p>
+
+      <p v-else class="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+        暂无近期活动预热，敬请期待。
       </p>
     </div>
   </section>
@@ -104,10 +108,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useActivityPostsStore } from '@/stores/activityPosts'
+import { useActivityPreviewsStore } from '@/stores/activityPreviews'
+import { routeForArticle } from '@/core/articleRoutes'
 
 const ASSET_BASE_URL = import.meta.env.VITE_ASSET_BASE_URL || '/assets';
-const activityPostsStore = useActivityPostsStore()
+const activityPreviewsStore = useActivityPreviewsStore()
 
 const randomGif = ref('')
 
@@ -117,14 +122,14 @@ const getRandomGif = () => {
 }
 
 const recentEvents = computed(() => {
-  return activityPostsStore.posts.slice(0, 3)
+  return activityPreviewsStore.posts.slice(0, 3)
 })
 
 onMounted(() => {
   randomGif.value = getRandomGif()
 
   // 先用缓存渲染，再静默更新
-  activityPostsStore.fetchPosts()
+  activityPreviewsStore.fetchPosts()
 })
 
 const formatDate = (dateString: string) => {
